@@ -1,0 +1,38 @@
+server:
+  port: 8443
+  ssl:
+    key-store: classpath:keystore/killrvideo.p12
+    key-store-password: killrvideo
+    key-store-type: PKCS12
+    key-alias: killrvideo
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: killrvideo-java-service
+
+# Astra DB Configuration
+astra:
+  db:
+    api-endpoint: ${ASTRA_DB_API_ENDPOINT}
+    application-token: ${ASTRA_DB_APPLICATION_TOKEN}
+    namespace: ${ASTRA_DB_NAMESPACE}
+
+# JWT Configuration
+killrvideo:
+  jwt:
+    secret: bXktc3VwZXItc2VjcmV0LWtleS1mb3Ita2lsbHJ2aWRlby1qd3QtdG9rZW5zLTIwMjUtcmVmcmVzaAo
+    expiration-ms: 3600000
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true 
