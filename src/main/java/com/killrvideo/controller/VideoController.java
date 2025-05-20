@@ -87,7 +87,7 @@ public class VideoController {
      */
     @GetMapping("/video/{videoId}")
     public ResponseEntity<VideoResponse> getVideoByVideoId(@PathVariable String videoId) {
-        return videoDao.findByVideoId(videoId)
+        return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
                     VideoResponse response = VideoResponse.fromVideo(video);
                     return ResponseEntity.ok(response);
@@ -198,7 +198,7 @@ public class VideoController {
             @RequestParam(defaultValue = "5") int requestedLimit) {
         final int limit = requestedLimit <= 0 || requestedLimit > 20 ? 5 : requestedLimit;
 
-        Optional<Video> sourceVideoOpt = videoDao.findByVideoId(videoId);
+        Optional<Video> sourceVideoOpt = videoDao.findByVideoId(videoId, true);
 
         if (sourceVideoOpt.isPresent()) {
             Video sourceVideo = sourceVideoOpt.get();

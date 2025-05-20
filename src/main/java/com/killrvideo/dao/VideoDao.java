@@ -2,9 +2,12 @@ package com.killrvideo.dao;
 
 import com.datastax.astra.client.Collection;
 import com.datastax.astra.client.Database;
+import com.datastax.astra.client.model.Document;
 import com.datastax.astra.client.model.Filters;
 import com.datastax.astra.client.model.FindIterable;
+import com.datastax.astra.client.model.FindOneOptions;
 import com.datastax.astra.client.model.FindOptions;
+import com.datastax.astra.client.model.Projection;
 
 import com.killrvideo.dto.Video;
 
@@ -64,13 +67,24 @@ public class VideoDao {
      * @param videoId of the video to find
      * @return Optional containing the video if found, empty otherwise
      */
-    public Optional<Video> findByVideoId(String videoId) {
+    public Optional<Video> findByVideoId(String videoId, boolean includeVector) {
         logger.debug("Finding video by video ID: {}", videoId);
-        Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId));
-        if (video.isPresent()) {
-            logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
+
+        if (includeVector) {
+            FindOneOptions options = new FindOneOptions();
+            options.projection(new Projection("$vector", true));
+            Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId), options);
+            if (video.isPresent()) {
+                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
+            }
+            return video;
+        } else {
+            Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId));
+            if (video.isPresent()) {
+                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
+            }
+            return video;
         }
-        return video;
     }
 
     /**
