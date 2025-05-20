@@ -2,6 +2,7 @@ node_modules
 set-env.sh
 HELP.md
 target/
+docs/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
