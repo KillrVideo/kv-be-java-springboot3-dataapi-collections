@@ -41,6 +41,19 @@ public class UserDao {
         }
     }
 
+    public Optional<User> findByUserId(String userId) {
+        try {
+            Optional<Document> doc = userCollection.findOne(eq("user_id", userId));
+            if (doc.isPresent()) {
+                User user = toUser(doc.get());
+                return Optional.ofNullable(user);
+            }
+            return Optional.ofNullable(null);
+        } catch (Exception e) {
+            return Optional.ofNullable(null);
+        }
+    }
+
     public Optional<User> findByEmail(String email) {
         try {
         Optional<Document> doc = userCollection.findOne(eq("email", email));
@@ -64,7 +77,8 @@ public class UserDao {
             .append("first_name", user.getFirstName())
             .append("last_name", user.getLastName())
             .append("email", user.getEmail())
-            .append("hashed_password", user.getHashedPassword());
+            .append("hashed_password", user.getHashedPassword())
+            .append("role", user.getRole());
     }
 
     private User toUser(Document document) {
@@ -74,7 +88,8 @@ public class UserDao {
             document.getString("last_name"),
             document.getString("email"),
             document.getString("hashed_password"),
-            document.getInstant("created_at")
+            document.getInstant("created_at"),
+            document.getString("role")
         );
     }
 }

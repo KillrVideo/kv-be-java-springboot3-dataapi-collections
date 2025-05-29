@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,7 +42,7 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         logger.info("Processing signin request for user: {}", loginRequest.getEmail());
         
         Authentication authentication = authenticationManager.authenticate(
@@ -53,9 +54,9 @@ public class AuthController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         logger.info("User authenticated successfully: {}", userDetails.getUsername());
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername()));
+        JwtResponse response = new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername());
+        logger.info("Token created.");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/signup")
@@ -76,7 +77,8 @@ public class AuthController {
                 signUpRequest.getLastName(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()),
-                Instant.now()
+                Instant.now(),
+                "USER"
         );
 
         userDao.save(user);

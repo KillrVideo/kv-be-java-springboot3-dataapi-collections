@@ -2,7 +2,6 @@ package com.killrvideo.dao;
 
 import com.datastax.astra.client.Collection;
 import com.datastax.astra.client.Database;
-import com.datastax.astra.client.model.Document;
 import com.datastax.astra.client.model.Filters;
 import com.datastax.astra.client.model.FindIterable;
 import com.datastax.astra.client.model.FindOneOptions;

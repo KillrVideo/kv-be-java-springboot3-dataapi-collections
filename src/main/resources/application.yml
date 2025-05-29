@@ -35,4 +35,16 @@ management:
     health:
       show-details: when_authorized
       probes:
-        enabled: true 
+        enabled: true
+
+# OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+  show-actuator: true
+  packages-to-scan: com.killrvideo.controller 

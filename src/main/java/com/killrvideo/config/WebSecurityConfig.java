@@ -80,8 +80,9 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> {
                 auth
                     .requestMatchers("/api/v1/auth/**", "/api/v1/health").permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .anyRequest().authenticated();
-                logger.info("Authorization rules configured: /api/v1/auth/** and /api/v1/health permitted, all others require authentication");
+                logger.info("Authorization rules configured: /api/v1/auth/**, /api/v1/health, and Swagger UI endpoints permitted, all others require authentication");
             })
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
