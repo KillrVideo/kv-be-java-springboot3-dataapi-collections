@@ -71,6 +71,13 @@ public class UserDao {
         return findByEmail(email).isPresent();
     }
 
+    public void update(User user) {
+        if (user.getUserId() == null) {
+            throw new IllegalArgumentException("User ID cannot be null for update");
+        }
+        userCollection.replaceOne(eq("user_id", user.getUserId()), toDocument(user));
+    }
+
     private Document toDocument(User user) {
         return new Document()
             .append("user_id", user.getUserId())

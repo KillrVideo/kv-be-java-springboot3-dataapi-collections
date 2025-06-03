@@ -1,6 +1,5 @@
 package com.killrvideo.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.killrvideo.dao.CommentDao;
 import com.killrvideo.dao.UserDao;
 import com.killrvideo.dao.VideoDao;
@@ -8,7 +7,6 @@ import com.killrvideo.dto.Comment;
 import com.killrvideo.dto.User;
 import com.killrvideo.dto.CommentResponse;
 import com.killrvideo.dto.SubmitCommentRequest;
-import com.killrvideo.dto.DeleteCommentRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

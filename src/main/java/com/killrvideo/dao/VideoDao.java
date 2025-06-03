@@ -80,7 +80,7 @@ public class VideoDao {
         } else {
             Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId));
             if (video.isPresent()) {
-                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
+                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId());
             }
             return video;
         }
