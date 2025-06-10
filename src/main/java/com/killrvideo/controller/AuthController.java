@@ -17,7 +17,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +42,7 @@ public class AuthController {
     @Autowired
     private JwtUtils jwtUtils;
 
-    @PostMapping("/signin")
+    @PostMapping("/login")
     public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         logger.info("Processing signin request for user: {}", loginRequest.getEmail());
         
@@ -56,12 +55,12 @@ public class AuthController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         logger.info("User authenticated successfully: {}", userDetails.getUsername());
-        JwtResponse response = new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername());
+        JwtResponse response = new JwtResponse(jwt, userDetails.getUserId(), userDetails.getUsername());
         logger.info("Token created.");
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         logger.info("Processing signup request for user: {}", signUpRequest.getEmail());
 
@@ -151,6 +150,7 @@ public class AuthController {
         }
 
         User user = userOptional.get();
+        logger.info("Retrieved profile for user: {}", userId);
         return ResponseEntity.ok(user);
     }
 } 
