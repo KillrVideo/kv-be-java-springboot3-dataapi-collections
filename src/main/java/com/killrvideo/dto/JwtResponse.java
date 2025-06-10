@@ -6,12 +6,12 @@ package com.killrvideo.dto;
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
-    private String id;
+    private String userId;
     private String email;
 
-    public JwtResponse(String accessToken, String id, String email) {
+    public JwtResponse(String accessToken, String userId, String email) {
         this.token = accessToken;
-        this.id = id;
+        this.userId = userId;
         this.email = email;
     }
 
@@ -23,8 +23,8 @@ public class JwtResponse {
         return type;
     }
     
-    public String getId() {
-        return id;
+    public String getUserId() {
+        return userId;
     }
 
     public String getEmail() {

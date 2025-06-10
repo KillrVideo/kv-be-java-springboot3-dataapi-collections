@@ -14,15 +14,15 @@ import java.util.Objects;
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
-    private String id;
+    private String userId;
     private String username; // email
     @JsonIgnore
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(String id, String email, String password,
+    public UserDetailsImpl(String userId, String email, String password,
                          Collection<? extends GrantedAuthority> authorities) {
-        this.id = id;
+        this.userId = userId;
         this.username = email;
         this.password = password;
         this.authorities = authorities;
@@ -36,10 +36,6 @@ public class UserDetailsImpl implements UserDetails {
                 user.getEmail(),
                 user.getHashedPassword(),
                 authorities);
-    }
-
-    public String getId() {
-        return id;
     }
 
     @Override
@@ -82,16 +78,16 @@ public class UserDetailsImpl implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserDetailsImpl user = (UserDetailsImpl) o;
-        return Objects.equals(id, user.id);
+        return Objects.equals(userId, user.userId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(userId);
     }
 
     public String getUserId() {
-        return id;
+        return userId;
     }
 
     public String getEmail() {

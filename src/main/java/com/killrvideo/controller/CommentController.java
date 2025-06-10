@@ -68,7 +68,7 @@ public class CommentController {
     /**
      * Get comments for a video
      */
-    @GetMapping("/video/{videoId}")
+    @GetMapping("/comments/video/{videoId}")
     public ResponseEntity<List<CommentResponse>> getCommentsByVideo(
             @PathVariable String videoId,
             @RequestParam(defaultValue = "20") int limit) {
@@ -94,7 +94,7 @@ public class CommentController {
     /**
      * Get comments by a user
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/comments/user/{userId}")
     public ResponseEntity<List<CommentResponse>> getCommentsByUser(
             @PathVariable String userId,
             @RequestParam(defaultValue = "20") int limit) {

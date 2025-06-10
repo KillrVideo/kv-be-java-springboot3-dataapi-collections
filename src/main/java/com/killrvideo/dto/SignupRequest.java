@@ -7,11 +7,13 @@ import lombok.Data;
 
 @Data
 public class SignupRequest {
-    @NotBlank(message = "First name is required")
+
+    @Size(min = 2, max = 50)
+    private String userName;
+
     @Size(min = 2, max = 50)
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
     @Size(min = 2, max = 50)
     private String lastName;
 
@@ -25,6 +27,10 @@ public class SignupRequest {
     private String password;
 
     private String role;
+
+    public String getUserName() {
+        return userName;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -44,6 +50,10 @@ public class SignupRequest {
 
     public String getRole() {
         return role;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public void setFirstName(String firstName) {
