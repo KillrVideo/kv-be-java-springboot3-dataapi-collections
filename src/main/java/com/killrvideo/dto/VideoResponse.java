@@ -5,12 +5,13 @@ import java.time.Instant;
 import java.util.Set;
 
 public class VideoResponse {
-    @JsonProperty("video_id")
+    @JsonProperty("id")
     private String videoId;
     
     @JsonProperty("user_id")
     private String userId;
     
+    @JsonProperty("title")
     private String name;
     
     private String description;
@@ -19,22 +20,29 @@ public class VideoResponse {
     
     private String location;
     
-    @JsonProperty("preview_image_location")
+    @JsonProperty("thumbnail_url")
     private String previewImageLocation;
     
-    @JsonProperty("added_date")
+    @JsonProperty("upload_date")
     private Instant addedDate;
     
     // Additional metadata fields
-    @JsonProperty("user_name")
+    @JsonProperty("creator")
     private String userName;  // Combination of user's first and last name
     
     @JsonProperty("comment_count")
     private long commentCount;
+
+    @JsonProperty("views")
+    private long viewCount;
     
     @JsonProperty("processing_status")
     private String processingStatus;  // e.g., "PENDING", "COMPLETED", "FAILED"
     
+    private float rating;
+
+    private float[] vector;
+
     // Getters
     public String getVideoId() {
         return videoId;
@@ -76,10 +84,22 @@ public class VideoResponse {
         return commentCount;
     }
 
+    public long getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(long viewCount) {
+        this.viewCount = viewCount;
+    }
+
     public String getProcessingStatus() {
         return processingStatus;
     }
 
+    public float getRating() {
+        return rating;
+    }
+    
     // Setters
     public void setVideoId(String videoId) {
         this.videoId = videoId;
@@ -125,6 +145,18 @@ public class VideoResponse {
         this.processingStatus = processingStatus;
     }
 
+    public void setVector(float[] vector) {
+        this.vector = vector;
+    }
+
+    public float[] getVector() {
+        return vector;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
+    }
+
     // Static factory method to create from Video
     public static VideoResponse fromVideo(Video video) {
         VideoResponse response = new VideoResponse();
@@ -136,7 +168,9 @@ public class VideoResponse {
         response.setLocation(video.getLocation());
         response.setPreviewImageLocation(video.getPreviewImageLocation());
         response.setAddedDate(video.getAddedDate());
+        response.setVector(video.getVector());
         // Additional fields will be set by the service layer
+        // username, viewCount, commentCount, processingStatus
         return response;
     }
 } 
