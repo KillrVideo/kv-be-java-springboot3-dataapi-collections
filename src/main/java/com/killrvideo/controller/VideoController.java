@@ -131,13 +131,14 @@ public class VideoController {
     /**
      * Get latest videos
      */
-    @GetMapping("/latest")
+    @GetMapping("/latest/page/{page}/page_size/{pageSize}")
     public ResponseEntity<List<VideoResponse>> getLatestVideos(
-            @RequestParam(defaultValue = "15") int limit) {
-        if (limit <= 0 || limit > 100) {
-            limit = 10;
+            @PathVariable int page,
+            @PathVariable int pageSize) {
+        if (page <= 0 || pageSize <= 0 || pageSize > 100) {
+            pageSize = 10;
         }
-        List<VideoResponse> videos = videoDao.findLatest(limit)
+        List<VideoResponse> videos = videoDao.findLatest(pageSize)
                 .all()
                 .stream()
                 .map(VideoResponse::fromVideo)
