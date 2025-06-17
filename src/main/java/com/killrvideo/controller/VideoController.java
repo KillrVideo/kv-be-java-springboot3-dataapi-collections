@@ -13,19 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -46,38 +42,29 @@ public class VideoController {
     /**
      * Submit a new video
      */
-    @PostMapping(value = "/user/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> submitVideo(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("name") String name,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "tags", required = false) Set<String> tags,
-            @PathVariable String userId) {
-
-        User userDetails = userDao.findByUserId(userId).get();
-
-        if (userDetails == null) {
-            logger.warn("User not found with ID: {}", userId);
-            return ResponseEntity.badRequest().body("Error: User not found!");
-        }
+            @Valid @RequestBody VideoSubmitRequest submitRequest,
+            Authentication authentication) {
+        
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        String userId = userDetails.getUserId();
 
         try {
-            // Store the video file
-            String filename = storageService.store(file);
-            
             // Create video metadata
             Video video = new Video();
             video.setVideoId(UUID.randomUUID().toString());
             video.setUserId(userId);
-            video.setName(name);
-            video.setDescription(description);
-            video.setTags(tags);
-            video.setLocation(filename); // Store the filename as the location
+            video.setName(submitRequest.getTitle() != null ? submitRequest.getTitle() : "Untitled Video");
+            video.setDescription(null); // Will be updated during processing
+            video.setTags(null); // Will be updated during processing
+            video.setLocation(submitRequest.getYoutubeUrl());
             video.setAddedDate(Instant.now());
+            video.setProcessingStatus("PENDING");
             
             // Generate the embedding for the video
-            String videoText = video.getName() + " " + (video.getDescription() != null ? video.getDescription() : "");
+            String videoText = video.getName();
             float[] videoVector = embeddingModel.embed(videoText).content().vector();
             video.setVector(videoVector);
 
@@ -102,24 +89,25 @@ public class VideoController {
     }
 
     /**
-     * Get a video by databaseID
+     * Get video status
      */
-    @GetMapping("/database/{videoId}")
-    public ResponseEntity<VideoResponse> getVideoByDatabaseId(@PathVariable String videoId) {
-        return videoDao.findById(videoId)
+    @GetMapping("/id/{videoId}/status")
+    public ResponseEntity<VideoStatusResponse> getVideoStatus(@PathVariable String videoId) {
+        return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
-                    VideoResponse response = VideoResponse.fromVideo(video);
-                    // TODO: Fetch and set additional metadata (user name, comment count)
+                    VideoStatusResponse response = new VideoStatusResponse();
+                    response.setVideoId(video.getVideoId());
+                    response.setStatus(video.getProcessingStatus());
                     return ResponseEntity.ok(response);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     /**
-     * Get a video by videoId
+     * Get video details
      */
-    @GetMapping("/{videoId}")
-    public ResponseEntity<VideoResponse> getVideoByVideoId(@PathVariable String videoId) {
+    @GetMapping("/id/{videoId}")
+    public ResponseEntity<VideoResponse> getVideoDetails(@PathVariable String videoId) {
         return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
                     VideoResponse response = VideoResponse.fromVideo(video);
@@ -129,12 +117,29 @@ public class VideoController {
     }
 
     /**
+     * Record a video view
+     */
+    @PostMapping("/id/{videoId}/view")
+    public ResponseEntity<?> recordVideoView(@PathVariable String videoId) {
+        return videoDao.findByVideoId(videoId, false)
+                .map(video -> {
+                    if (!"READY".equals(video.getProcessingStatus())) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                    }
+                    video.setViews(video.getViews() + 1);
+                    videoDao.update(video);
+                    return ResponseEntity.noContent().build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
      * Get latest videos
      */
-    @GetMapping("/latest/page/{page}/page_size/{pageSize}")
+    @GetMapping("/latest")
     public ResponseEntity<List<VideoResponse>> getLatestVideos(
-            @PathVariable int page,
-            @PathVariable int pageSize) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
         if (page <= 0 || pageSize <= 0 || pageSize > 100) {
             pageSize = 10;
         }
@@ -147,16 +152,16 @@ public class VideoController {
     }
 
     /**
-     * Get videos by user ID
+     * Get videos by uploader
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<VideoResponse>> getVideosByUser(
-            @PathVariable String userId,
-            @RequestParam(defaultValue = "10") int limit) {
-        if (limit <= 0 || limit > 100) {
-            limit = 10;
+    @GetMapping("/by-uploader/{uploaderId}")
+    public ResponseEntity<List<VideoResponse>> getVideosByUploader(
+            @PathVariable String uploaderId,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        if (pageSize <= 0 || pageSize > 100) {
+            pageSize = 10;
         }
-        List<VideoResponse> videos = videoDao.findByUserId(userId, limit)
+        List<VideoResponse> videos = videoDao.findByUserId(uploaderId, pageSize)
                 .all()
                 .stream()
                 .map(VideoResponse::fromVideo)
@@ -165,9 +170,31 @@ public class VideoController {
     }
 
     /**
-     * Update a video
+     * Get videos by tag
      */
-    @PutMapping("/{videoId}")
+    @GetMapping("/by-tag/{tagName}")
+    public ResponseEntity<List<VideoResponse>> getVideosByTag(
+            @PathVariable String tagName,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        if (pageSize <= 0 || pageSize > 50) {
+            pageSize = 10;
+        }
+        if (tagName == null || tagName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+
+        List<VideoResponse> videos = videoDao.findByTag(tagName.trim(), pageSize)
+                .all()
+                .stream()
+                .map(VideoResponse::fromVideo)
+                .toList();
+        return ResponseEntity.ok(videos);
+    }
+
+    /**
+     * Update video details
+     */
+    @PutMapping("/id/{videoId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateVideo(
             @PathVariable String videoId,
@@ -175,7 +202,7 @@ public class VideoController {
             Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        return videoDao.findById(videoId)
+        return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
                     // Check if the authenticated user owns the video
                     if (!video.getUserId().equals(userDetails.getUserId())) {
@@ -202,31 +229,9 @@ public class VideoController {
     }
 
     /**
-     * Search videos by tag
-     */
-    @GetMapping("/tag/{tag}")
-    public ResponseEntity<List<VideoResponse>> getVideosByTag(
-            @PathVariable String tag,
-            @RequestParam(defaultValue = "10") int limit) {
-        if (limit <= 0 || limit > 50) {
-            limit = 10;
-        }
-        if (tag == null || tag.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Collections.emptyList());
-        }
-
-        List<VideoResponse> videos = videoDao.findByTag(tag.trim(), limit)
-                .all()
-                .stream()
-                .map(VideoResponse::fromVideo)
-                .toList();
-        return ResponseEntity.ok(videos);
-    }
-
-    /**
      * Find similar videos based on vector similarity
      */
-    @GetMapping("{videoId}/related")
+    @GetMapping("/id/{videoId}/related")
     public ResponseEntity<List<VideoResponse>> getSimilarVideos(
             @PathVariable String videoId,
             @RequestParam(defaultValue = "5") int requestedLimit) {
@@ -246,31 +251,5 @@ public class VideoController {
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    /**
-     * Soft delete a video
-     */
-    @DeleteMapping("/{videoId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deleteVideo(
-            @PathVariable String videoId,
-            Authentication authentication) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        return videoDao.findById(videoId)
-                .map(video -> {
-                    if (!video.getUserId().equals(userDetails.getUserId())) {
-                        return ResponseEntity
-                                .status(HttpStatus.FORBIDDEN)
-                                .body("You are not authorized to delete this video");
-                    }
-
-                    video.setDeleted(true);
-                    video.setDeletedAt(Instant.now());
-                    videoDao.update(video);
-                    return ResponseEntity.noContent().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
     }
 } 
