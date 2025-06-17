@@ -137,7 +137,7 @@ public class VideoController {
      * Get latest videos
      */
     @GetMapping("/latest")
-    public ResponseEntity<List<VideoResponse>> getLatestVideos(
+    public ResponseEntity<LatestVideosResponse> getLatestVideos(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
         if (page <= 0 || pageSize <= 0 || pageSize > 100) {
@@ -148,7 +148,10 @@ public class VideoController {
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .toList();
-        return ResponseEntity.ok(videos);
+
+        LatestVideosResponse response = new LatestVideosResponse(videos);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -245,6 +248,8 @@ public class VideoController {
             List<VideoResponse> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1)
                 .all()
                 .stream()
+                .filter(video -> !video.getVideoId().equals(videoId))
+                .limit(limit)
                 .map(VideoResponse::fromVideo)
                 .toList();
             return ResponseEntity.ok(similarVideos);
