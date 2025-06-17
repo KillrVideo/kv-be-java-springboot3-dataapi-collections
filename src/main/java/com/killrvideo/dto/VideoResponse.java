@@ -5,10 +5,13 @@ import java.time.Instant;
 import java.util.Set;
 
 public class VideoResponse {
-    @JsonProperty("id")
+    
+    private String key;
+    
+    //@JsonProperty("video_id")
     private String videoId;
     
-    @JsonProperty("user_id")
+    //@JsonProperty("user_id")
     private String userId;
     
     @JsonProperty("title")
@@ -20,30 +23,38 @@ public class VideoResponse {
     
     private String location;
     
-    @JsonProperty("thumbnail_url")
+    @JsonProperty("thumbnailUrl")
     private String previewImageLocation;
     
-    @JsonProperty("upload_date")
+    @JsonProperty("submittedAt")
     private Instant addedDate;
     
     // Additional metadata fields
     @JsonProperty("creator")
     private String userName;  // Combination of user's first and last name
     
-    @JsonProperty("comment_count")
     private long commentCount;
 
-    @JsonProperty("views")
+    //@JsonProperty("views")
     private long viewCount;
     
-    @JsonProperty("processing_status")
+    //JsonProperty("processing_status")
     private String processingStatus;  // e.g., "PENDING", "COMPLETED", "FAILED"
     
+    @JsonProperty("averageRating")
     private float rating;
 
     private float[] vector;
 
+    //@JsonProperty("youtube_id")
+    private String youtubeVideoId;
+
     // Getters
+
+    public String getKey() {
+        return key;
+    }
+
     public String getVideoId() {
         return videoId;
     }
@@ -100,7 +111,12 @@ public class VideoResponse {
         return rating;
     }
     
+
     // Setters
+    public void setKey(String key) {
+        this.key = key;
+    }
+
     public void setVideoId(String videoId) {
         this.videoId = videoId;
     }
@@ -157,9 +173,18 @@ public class VideoResponse {
         this.rating = rating;
     }
 
+    public String getYoutubeVideoId() {
+        return youtubeVideoId;
+    }
+
+    public void setYoutubeVideoId(String youtubeVideoId) {
+        this.youtubeVideoId = youtubeVideoId;
+    }
+
     // Static factory method to create from Video
     public static VideoResponse fromVideo(Video video) {
         VideoResponse response = new VideoResponse();
+        response.setKey(video.getVideoId());
         response.setVideoId(video.getVideoId());
         response.setUserId(video.getUserId());
         response.setName(video.getName());
@@ -169,6 +194,7 @@ public class VideoResponse {
         response.setPreviewImageLocation(video.getPreviewImageLocation());
         response.setAddedDate(video.getAddedDate());
         response.setVector(video.getVector());
+        response.setYoutubeVideoId(video.getYoutubeId());
         // Additional fields will be set by the service layer
         // username, viewCount, commentCount, processingStatus
         return response;

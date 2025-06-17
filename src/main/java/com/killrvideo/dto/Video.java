@@ -33,6 +33,12 @@ public class Video {
     @JsonProperty("deleted_at")
     private Instant deletedAt;
 
+    private String processingStatus = "PENDING";
+    private int views = 0;
+
+    @JsonProperty("youtube_id")
+    private String youtubeId;
+
     // Getters
     public String getVideoId() {
         return videoId;
@@ -78,6 +84,18 @@ public class Video {
         return deletedAt;
     }
 
+    public String getProcessingStatus() {
+        return processingStatus;
+    }
+
+    public int getViews() {
+        return views;
+    }
+
+    public String getYoutubeId() {
+        return youtubeId;
+    }
+
     // Setters
     public void setVideoId(String videoId) {
         this.videoId = videoId;
@@ -121,5 +139,17 @@ public class Video {
 
     public void setDeletedAt(Instant deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public void setProcessingStatus(String processingStatus) {
+        this.processingStatus = processingStatus;
+    }
+
+    public void setViews(int views) {
+        this.views = views;
+    }
+
+    public void setYoutubeId(String youtubeId) {
+        this.youtubeId = youtubeId;
     }
 } 

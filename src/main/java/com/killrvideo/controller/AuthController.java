@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -88,10 +89,45 @@ public class AuthController {
         return ResponseEntity.ok("User registered successfully!");
     }
 
-    @PutMapping("/{userId}")
-    public ResponseEntity<?> updateUser(
-            @PathVariable String userId,
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getCurrentUser() {        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null) {
+            logger.warn("No authentication recent found! Try logging in again.");
+            return ResponseEntity.badRequest().body("Error: No authentication recentfound! Try logging in again.");
+        }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        String userId = userDetails.getUserId();
+
+        Optional<User> userOptional = userDao.findByUserId(userId);
+        if (userOptional.isEmpty()) {
+            logger.warn("User not found with ID: {}", userId);
+            return ResponseEntity.badRequest().body("Error: User not found!");
+        }
+
+        User user = userOptional.get();
+        logger.info("Retrieved profile for user: {}", userId);
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateCurrentUser(
             @Valid @RequestBody UpdateUserRequest updateRequest) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+
+        if (auth == null) {
+            logger.warn("No authentication recent found! Try logging in again.");
+            return ResponseEntity.badRequest().body("Error: No authentication recentfound! Try logging in again.");
+        }
+        
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        String userId = userDetails.getUserId();
         
         logger.info("Processing update request for user: {}", userId);
 
@@ -137,20 +173,5 @@ public class AuthController {
                     .badRequest()
                     .body("Error updating user: " + e.getMessage());
         }
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getUser(@PathVariable String userId) {
-        logger.info("Processing get request for user: {}", userId);
-
-        Optional<User> userOptional = userDao.findByUserId(userId);
-        if (userOptional.isEmpty()) {
-            logger.warn("User not found with ID: {}", userId);
-            return ResponseEntity.badRequest().body("Error: User not found!");
-        }
-
-        User user = userOptional.get();
-        logger.info("Retrieved profile for user: {}", userId);
-        return ResponseEntity.ok(user);
     }
 } 
