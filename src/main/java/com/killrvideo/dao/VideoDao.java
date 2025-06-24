@@ -7,6 +7,7 @@ import com.datastax.astra.client.model.FindIterable;
 import com.datastax.astra.client.model.FindOneOptions;
 import com.datastax.astra.client.model.FindOptions;
 import com.datastax.astra.client.model.Projection;
+import com.datastax.astra.client.model.Update;
 
 import com.killrvideo.dto.Video;
 
@@ -120,12 +121,13 @@ public class VideoDao {
      * @throws IllegalArgumentException if video ID is null
      */
     public void update(Video video) {
-        if (video.getVideoId() == null) {
-            logger.error("Attempted to update video with null ID");
-            throw new IllegalArgumentException("Video ID cannot be null for update");
-        }
         logger.debug("Updating video with ID: {}", video.getVideoId());
         videoCollection.replaceOne(Filters.eq("video_id", video.getVideoId()), video);
+    }
+
+    public void updateViews(String videoId, long views) {
+        logger.debug("Updating views for video with ID: {}", videoId);
+        videoCollection.updateOne(Filters.eq("video_id", videoId), new Update().set("views", views));
     }
 
     /**

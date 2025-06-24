@@ -2,6 +2,7 @@ package com.killrvideo.controller;
 
 import com.killrvideo.dao.VideoDao;
 import com.killrvideo.dao.UserDao;
+import com.killrvideo.dao.RatingDao;
 import com.killrvideo.dto.*;
 import com.killrvideo.security.UserDetailsImpl;
 import com.killrvideo.service.StorageService;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +36,7 @@ public class VideoController {
     private VideoDao videoDao;
 
     @Autowired
-    private UserDao userDao;
+    private RatingDao ratingDao;
 
     private StorageService storageService = new StorageService();
 
@@ -120,18 +122,20 @@ public class VideoController {
     /**
      * Record a video view
      */
+    //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
     @PostMapping("/id/{videoId}/view")
     public ResponseEntity<?> recordVideoView(@PathVariable String videoId) {
-        return videoDao.findByVideoId(videoId, false)
-                .map(video -> {
-                    if (!"READY".equals(video.getProcessingStatus())) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    }
-                    video.setViews(video.getViews() + 1);
-                    videoDao.update(video);
-                    return ResponseEntity.noContent().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Video> videoOpt = videoDao.findByVideoId(videoId, false);
+
+        if (videoOpt.isPresent()) {
+            Video video = videoOpt.get();
+            long views = video.getViews() + 1;
+            video.setViews(views);
+            videoDao.updateViews(videoId,views);
+            return ResponseEntity.ok(VideoResponse.fromVideo(video));
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     /**
@@ -144,11 +148,29 @@ public class VideoController {
         if (page <= 0 || pageSize <= 0 || pageSize > 100) {
             pageSize = 10;
         }
-        List<VideoResponse> videos = videoDao.findLatest(pageSize)
-                .all()
-                .stream()
-                .map(VideoResponse::fromVideo)
-                .toList();
+
+        List<Video> videoList = videoDao.findLatest(pageSize).all();
+
+        List<VideoResponse> videos = new ArrayList<>();
+        for (Video video : videoList) {
+            VideoResponse videoResponse = VideoResponse.fromVideo(video);
+            // Get all ratings for the video
+            List<Rating> ratings = ratingDao.findByVideoId(video.getVideoId());
+
+            if (ratings.size() > 0) {
+                int ratingCount = ratings.size();
+                int totalRating = 0;
+                for (Rating rating : ratings) {
+                    totalRating += rating.getRatingAsInt();
+                }
+
+                videoResponse.setRating(totalRating / ratingCount);
+            } else {
+                videoResponse.setRating(0.0f);
+            }
+            
+            videos.add(videoResponse);
+        }
 
         LatestVideosResponse response = new LatestVideosResponse(videos);
 
@@ -258,6 +280,4 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
     }
-
-    //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
 } 
