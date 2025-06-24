@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
+import java.util.List;
 
 @Repository
 public class VideoDao {
@@ -173,5 +174,52 @@ public class VideoDao {
             null,
             new FindOptions().sort(Map.of("$vector", vector)).limit(limit)
         );
+    }
+
+    /**
+     * Search videos by text query using vector similarity.
+     * @param searchVector The search vector.
+     * @param limit Max number of videos to return.
+     * @return Optional containing FindIterable of matching videos.
+     */
+    public Optional<FindIterable<Video>> searchVideos(float[] searchVector, int limit) {
+        if (searchVector == null) {
+            logger.warn("Attempted to search with null search vector");
+            return Optional.empty();
+        }
+        logger.debug("Searching videos with vector search, limit: {}", limit);
+        
+        FindIterable<Video> results = videoCollection.find(
+            null,
+            new FindOptions()
+                .sort(Map.of("$vector", searchVector))
+                .limit(limit)
+        );
+        return Optional.of(results);
+    }
+
+    /**
+     * Get tag suggestions based on a query.
+     * @param query The query to search for in tags.
+     * @param limit Max number of tag suggestions to return.
+     * @return List of unique tag suggestions.
+     */
+    public List<String> suggestTags(String query, int limit) {
+        if (query == null || query.trim().isEmpty()) {
+            logger.warn("Attempted to suggest tags with null or empty query");
+            return List.of();
+        }
+        logger.debug("Suggesting tags with query: {}, limit: {}", query, limit);
+        
+        // Get all videos and extract tags that match the query
+        return videoCollection.find()
+            .all()
+            .stream()
+            .filter(video -> video.getTags() != null)
+            .flatMap(video -> video.getTags().stream())
+            .filter(tag -> tag.toLowerCase().contains(query.toLowerCase()))
+            .distinct()
+            .limit(limit)
+            .toList();
     }
 } 

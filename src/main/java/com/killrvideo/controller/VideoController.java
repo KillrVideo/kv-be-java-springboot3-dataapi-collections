@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -45,10 +46,10 @@ public class VideoController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> submitVideo(
-            @Valid @RequestBody VideoSubmitRequest submitRequest,
-            Authentication authentication) {
+            @Valid @RequestBody VideoSubmitRequest submitRequest) {
         
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         String userId = userDetails.getUserId();
 
         try {
@@ -137,7 +138,7 @@ public class VideoController {
      * Get latest videos
      */
     @GetMapping("/latest")
-    public ResponseEntity<List<VideoResponse>> getLatestVideos(
+    public ResponseEntity<LatestVideosResponse> getLatestVideos(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
         if (page <= 0 || pageSize <= 0 || pageSize > 100) {
@@ -148,7 +149,10 @@ public class VideoController {
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .toList();
-        return ResponseEntity.ok(videos);
+
+        LatestVideosResponse response = new LatestVideosResponse(videos);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -245,6 +249,8 @@ public class VideoController {
             List<VideoResponse> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1)
                 .all()
                 .stream()
+                .filter(video -> !video.getVideoId().equals(videoId))
+                .limit(limit)
                 .map(VideoResponse::fromVideo)
                 .toList();
             return ResponseEntity.ok(similarVideos);
@@ -252,4 +258,6 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
 } 
