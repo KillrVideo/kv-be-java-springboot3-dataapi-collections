@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -45,10 +46,10 @@ public class VideoController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> submitVideo(
-            @Valid @RequestBody VideoSubmitRequest submitRequest,
-            Authentication authentication) {
+            @Valid @RequestBody VideoSubmitRequest submitRequest) {
         
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         String userId = userDetails.getUserId();
 
         try {
@@ -257,4 +258,6 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
 } 
