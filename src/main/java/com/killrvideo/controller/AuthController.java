@@ -8,6 +8,8 @@ import com.killrvideo.dto.UpdateUserRequest;
 import com.killrvideo.dto.User;
 import com.killrvideo.security.JwtUtils;
 import com.killrvideo.security.UserDetailsImpl;
+import com.killrvideo.dto.UserResponse;
+
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,6 +174,17 @@ public class AuthController {
             return ResponseEntity
                     .badRequest()
                     .body("Error updating user: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUser(@PathVariable String userId) {
+        Optional<User> user = userDao.findByUserId(userId);
+        if (user.isPresent()) {
+            UserResponse userResponse = new UserResponse(user.get());
+            return ResponseEntity.ok(userResponse);
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 } 
