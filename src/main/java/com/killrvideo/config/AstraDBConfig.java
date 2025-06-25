@@ -1,7 +1,7 @@
 package com.killrvideo.config;
 
 import com.datastax.astra.client.DataAPIClient;
-import com.datastax.astra.client.Database;
+import com.datastax.astra.client.databases.Database;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

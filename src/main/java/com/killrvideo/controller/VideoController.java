@@ -1,7 +1,6 @@
 package com.killrvideo.controller;
 
 import com.killrvideo.dao.VideoDao;
-import com.killrvideo.dao.UserDao;
 import com.killrvideo.dao.RatingDao;
 import com.killrvideo.dto.*;
 import com.killrvideo.security.UserDetailsImpl;
@@ -149,7 +148,7 @@ public class VideoController {
             pageSize = 10;
         }
 
-        List<Video> videoList = videoDao.findLatest(pageSize).all();
+        List<Video> videoList = videoDao.findLatest(pageSize);
 
         List<VideoResponse> videos = new ArrayList<>();
         for (Video video : videoList) {
@@ -188,7 +187,6 @@ public class VideoController {
             pageSize = 10;
         }
         List<VideoResponse> videos = videoDao.findByUserId(uploaderId, pageSize)
-                .all()
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .toList();
@@ -210,7 +208,6 @@ public class VideoController {
         }
 
         List<VideoResponse> videos = videoDao.findByTag(tagName.trim(), pageSize)
-                .all()
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .toList();
@@ -269,7 +266,6 @@ public class VideoController {
             Video sourceVideo = sourceVideoOpt.get();
 
             List<VideoResponse> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1)
-                .all()
                 .stream()
                 .filter(video -> !video.getVideoId().equals(videoId))
                 .limit(limit)

@@ -68,7 +68,7 @@ public class CommentController {
     /**
      * Get comments for a video
      */
-    @GetMapping("/comments/video/{videoId}")
+    @GetMapping("/id/{videoId}/comments")
     public ResponseEntity<List<CommentResponse>> getCommentsByVideo(
             @PathVariable String videoId,
             @RequestParam(defaultValue = "20") int limit) {
@@ -76,14 +76,7 @@ public class CommentController {
             limit = 20;
         }
 
-        // Verify video exists
-        // if (!videoDao.findByVideoId(videoId,false).isPresent()) {
-        //    return ResponseEntity.notFound().build();
-        // }
-        // Yeah, I really don't care if the video exists or not.
-
         List<CommentResponse> comments = commentDao.findByVideoId(videoId, limit)
-                .all()
                 .stream()
                 .map(CommentResponse::fromComment)
                 .toList();
@@ -103,7 +96,6 @@ public class CommentController {
         }
 
         List<CommentResponse> comments = commentDao.findByUserId(userId, limit)
-                .all()
                 .stream()
                 .map(CommentResponse::fromComment)
                 .toList();

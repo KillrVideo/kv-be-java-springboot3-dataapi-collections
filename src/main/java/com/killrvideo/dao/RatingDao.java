@@ -1,10 +1,9 @@
 package com.killrvideo.dao;
 
-import com.datastax.astra.client.Collection;
-import com.datastax.astra.client.Database;
-import com.datastax.astra.client.model.Filters;
-import com.datastax.astra.client.model.FindIterable;
-import com.datastax.astra.client.model.FindOptions;
+import com.datastax.astra.client.collections.Collection;
+import com.datastax.astra.client.databases.Database;
+import com.datastax.astra.client.core.query.Filters;
+
 import com.killrvideo.dto.Rating;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,7 +68,7 @@ public class RatingDao {
     public List<Rating> findByVideoId(String videoId) {
         logger.debug("Finding all ratings for video: {}", videoId);
         return ratingCollection.find(
-            Filters.eq("video_id", videoId)).all();
+            Filters.eq("video_id", videoId)).toList();
     }
 
     /**

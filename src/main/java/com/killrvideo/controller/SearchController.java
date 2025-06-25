@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Optional;
 
-import com.datastax.astra.client.model.FindIterable;
-
 @RestController
 @RequestMapping("/search")
 public class SearchController {
@@ -97,7 +95,7 @@ public class SearchController {
         try {
             float[] queryEmbeddings = embeddingModel.embed(query).content().vector();
             
-            Optional<FindIterable<Video>> searchResults = videoDao.searchVideos(queryEmbeddings, limit);
+            Optional<List<Video>> searchResults = videoDao.searchVideos(queryEmbeddings, limit);
             
             if (searchResults.isEmpty()) {
                 logger.debug("No search results found for query: {}", query);
@@ -105,7 +103,6 @@ public class SearchController {
             }
 
             List<VideoResponse> videos = searchResults.get()
-                .all()
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .collect(Collectors.toList());
