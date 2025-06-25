@@ -12,8 +12,9 @@ public class RatingResponse {
         List<RatingConversion> dataResponse = new ArrayList<>();
         float totalRating = 0;
         for (Rating rating : ratings) {
-            dataResponse.add(new RatingConversion(rating));
-            totalRating += Float.parseFloat(rating.getRating());
+            RatingConversion localRating = new RatingConversion(rating);
+            dataResponse.add(localRating);
+            totalRating += localRating.getAverageRating();
         }
 
         this.averageRating = totalRating / ratings.size();
@@ -36,7 +37,7 @@ class RatingConversion {
 
     public RatingConversion(Rating rating) {
         this.videoId = rating.getVideoId();
-        this.averageRating = Float.parseFloat(rating.getRating());
+        this.averageRating = parseRating(rating.getRating());
         this.ratingCount = 1;
     }
 
@@ -50,5 +51,29 @@ class RatingConversion {
     
     public int getRatingCount() {
         return ratingCount;
+    }
+
+    private float parseRating(String rating) {
+        try {
+            return Float.parseFloat(rating);
+        } catch (NumberFormatException e) {
+            // parse rating from string
+            StringBuilder ratingBuilder = new StringBuilder();
+            for (int index = 0; index < rating.length(); index++) {
+                char c = rating.charAt(index);
+                if (Character.isDigit(c) || c == '.') {
+                    ratingBuilder.append(c);
+                } else if (ratingBuilder.length() > 0) {
+                    // if we have already parsed a digit, and then get a non-digit, break
+                    break;
+                }
+            }
+
+            if (ratingBuilder.length() > 0) {
+                return Float.parseFloat(ratingBuilder.toString());
+            }
+
+            return 0.0f;
+        }
     }
 }

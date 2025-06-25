@@ -184,6 +184,19 @@ public class AuthController {
             UserResponse userResponse = new UserResponse(user.get());
             return ResponseEntity.ok(userResponse);
         } else {
+            logger.error("Error locating user: [{}]", userId);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
+        Optional<User> user = userDao.findByEmail(email);
+        if (user.isPresent()) {
+            UserResponse userResponse = new UserResponse(user.get());
+            return ResponseEntity.ok(userResponse);
+        } else {
+            logger.error("Error locating user: [{}]", email);
             return ResponseEntity.notFound().build();
         }
     }

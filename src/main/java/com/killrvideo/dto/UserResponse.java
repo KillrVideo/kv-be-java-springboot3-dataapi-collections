@@ -12,12 +12,6 @@ public class UserResponse {
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-
-        if (user.getCreatedAt() != null) {
-            this.createdAt = user.getCreatedAt().toString();
-        } else {
-            this.createdAt = "";
-        }
     }
 
     public String getUserId() {

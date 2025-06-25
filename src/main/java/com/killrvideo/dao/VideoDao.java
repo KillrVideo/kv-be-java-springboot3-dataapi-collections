@@ -1,12 +1,14 @@
 package com.killrvideo.dao;
 
-import com.datastax.astra.client.Collection;
-import com.datastax.astra.client.Database;
-import com.datastax.astra.client.model.Filters;
-import com.datastax.astra.client.model.FindIterable;
-import com.datastax.astra.client.model.FindOneOptions;
-import com.datastax.astra.client.model.FindOptions;
-import com.datastax.astra.client.model.Projection;
+import com.datastax.astra.client.collections.Collection;
+import com.datastax.astra.client.databases.Database;
+import com.datastax.astra.client.core.query.Filter;
+import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.collections.commands.options.CollectionFindOneOptions;
+import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
+import com.datastax.astra.client.core.query.Projection;
+import com.datastax.astra.client.core.query.Sort;
+import com.datastax.astra.client.collections.commands.Update;
 
 import com.killrvideo.dto.Video;
 
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
 
 @Repository
 public class VideoDao {
@@ -71,7 +73,7 @@ public class VideoDao {
         logger.debug("Finding video by video ID: {}", videoId);
 
         if (includeVector) {
-            FindOneOptions options = new FindOneOptions();
+            CollectionFindOneOptions options = new CollectionFindOneOptions();
             options.projection(new Projection("$vector", true));
             Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId), options);
             if (video.isPresent()) {
@@ -93,9 +95,11 @@ public class VideoDao {
      * @param limit Maximum number of videos to return
      * @return Iterable of videos
      */
-    public FindIterable<Video> findLatest(int limit) {
+    public List<Video> findLatest(int limit) {
         logger.debug("Finding latest {} videos", limit);
-        return videoCollection.find(new FindOptions().sort(Map.of("added_date", -1)).limit(limit));
+        return videoCollection.find(new CollectionFindOptions().sort(Sort.descending("added_date"))
+            .limit(limit))
+            .toList();
     }
 
     /**
@@ -105,12 +109,13 @@ public class VideoDao {
      * @param limit Maximum number of videos to return
      * @return Iterable of videos
      */
-    public FindIterable<Video> findByUserId(String userId, int limit) {
+    public List<Video> findByUserId(String userId, int limit) {
         logger.debug("Finding videos for user: {}, limit: {}", userId, limit);
         return videoCollection.find(
             Filters.eq("user_id", userId),
-            new FindOptions().sort(Map.of("added_date", -1)).limit(limit)
-        );
+            new CollectionFindOptions().sort(Sort.descending("added_date"))
+            .limit(limit))
+            .toList();
     }
 
     /**
@@ -120,12 +125,13 @@ public class VideoDao {
      * @throws IllegalArgumentException if video ID is null
      */
     public void update(Video video) {
-        if (video.getVideoId() == null) {
-            logger.error("Attempted to update video with null ID");
-            throw new IllegalArgumentException("Video ID cannot be null for update");
-        }
         logger.debug("Updating video with ID: {}", video.getVideoId());
         videoCollection.replaceOne(Filters.eq("video_id", video.getVideoId()), video);
+    }
+
+    public void updateViews(String videoId, long views) {
+        logger.debug("Updating views for video with ID: {}", videoId);
+        videoCollection.updateOne(Filters.eq("video_id", videoId), new Update().set("views", views));
     }
 
     /**
@@ -145,16 +151,16 @@ public class VideoDao {
      * @param limit Max number of videos to return.
      * @return FindIterable of videos.
      */
-    public FindIterable<Video> findByTag(String tag, int limit) {
+    public List<Video> findByTag(String tag, int limit) {
         if (tag == null || tag.trim().isEmpty()) {
-            logger.warn("Attempted to search with null or empty tag");
-            return videoCollection.find(Filters.eq("tags", "NON_EXISTENT_TAG_SO_EMPTY_RESULT"), new FindOptions().limit(0));
+            return new ArrayList<>();
         }
         logger.debug("Finding videos with tag: {}, limit: {}", tag, limit);
         return videoCollection.find(
             Filters.eq("tags", tag),
-            new FindOptions().sort(Map.of("added_date", -1)).limit(limit)
-        );
+            new CollectionFindOptions().sort(Sort.descending("added_date"))
+            .limit(limit))
+            .toList();
     }
 
     /**
@@ -164,7 +170,7 @@ public class VideoDao {
      * @param limit Max number of similar videos to return.
      * @return FindIterable of similar videos.
      */
-    public FindIterable<Video> findByVector(float[] vector, int limit) {
+    public List<Video> findByVector(float[] vector, int limit) {
         if (vector == null) {
             logger.error("Attempted vector search with null vector");
             throw new IllegalArgumentException("Query vector cannot be null.");
@@ -172,8 +178,8 @@ public class VideoDao {
         logger.debug("Finding similar videos with vector search, limit: {}", limit);
         return videoCollection.find(
             null,
-            new FindOptions().sort(Map.of("$vector", vector)).limit(limit)
-        );
+            new CollectionFindOptions().sort(Sort.vector(vector)).limit(limit))
+            .toList();
     }
 
     /**
@@ -182,19 +188,19 @@ public class VideoDao {
      * @param limit Max number of videos to return.
      * @return Optional containing FindIterable of matching videos.
      */
-    public Optional<FindIterable<Video>> searchVideos(float[] searchVector, int limit) {
+    public Optional<List<Video>> searchVideos(float[] searchVector, int limit) {
         if (searchVector == null) {
             logger.warn("Attempted to search with null search vector");
             return Optional.empty();
         }
         logger.debug("Searching videos with vector search, limit: {}", limit);
         
-        FindIterable<Video> results = videoCollection.find(
+        List<Video> results = videoCollection.find(
             null,
-            new FindOptions()
-                .sort(Map.of("$vector", searchVector))
-                .limit(limit)
-        );
+            new CollectionFindOptions()
+                .sort(Sort.vector(searchVector))
+                .limit(limit))
+            .toList();
         return Optional.of(results);
     }
 
@@ -212,8 +218,7 @@ public class VideoDao {
         logger.debug("Suggesting tags with query: {}, limit: {}", query, limit);
         
         // Get all videos and extract tags that match the query
-        return videoCollection.find()
-            .all()
+        return videoCollection.find((Filter) null)
             .stream()
             .filter(video -> video.getTags() != null)
             .flatMap(video -> video.getTags().stream())

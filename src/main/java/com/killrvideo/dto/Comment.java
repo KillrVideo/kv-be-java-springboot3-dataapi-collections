@@ -17,6 +17,10 @@ public class Comment {
     
     private Instant timestamp;
 
+    // Additional metadata fields
+    @JsonProperty("user_name")
+    private String userName;  // Combination of user's first and last name
+
     // Getters
     public String getCommentId() {
         return commentId;
@@ -38,6 +42,10 @@ public class Comment {
         return timestamp;
     }
 
+    public String getUserName() {
+        return userName;
+    }
+
     // Setters
     public void setCommentId(String commentId) {
         this.commentId = commentId;
@@ -57,5 +65,9 @@ public class Comment {
 
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 } 
