@@ -2,6 +2,8 @@ package com.killrvideo.controller;
 
 import com.killrvideo.dao.VideoDao;
 import com.killrvideo.dao.RatingDao;
+import com.killrvideo.dao.CommentDao;
+import com.killrvideo.dao.UserDao;
 import com.killrvideo.dto.*;
 import com.killrvideo.security.UserDetailsImpl;
 import com.killrvideo.service.StorageService;
@@ -36,6 +38,12 @@ public class VideoController {
 
     @Autowired
     private RatingDao ratingDao;
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private CommentDao commentDao;
 
     private StorageService storageService = new StorageService();
 
@@ -221,9 +229,9 @@ public class VideoController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateVideo(
             @PathVariable String videoId,
-            @Valid @RequestBody VideoUpdateRequest updateRequest,
-            Authentication authentication) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            @Valid @RequestBody VideoUpdateRequest updateRequest) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         
         return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
@@ -275,5 +283,113 @@ public class VideoController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Submit a new comment
+     */
+    @PostMapping("{videoId}/comments")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CommentResponse> submitComment(
+            @PathVariable String videoId,
+            @Valid @RequestBody SubmitCommentRequest submitCommentRequest) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        String userId = userDetails.getUserId();        
+
+        Comment comment = new Comment();
+        comment.setCommentId(UUID.randomUUID().toString());
+        comment.setVideoId(videoId);
+        //comment.setUserId(submitCommentRequest.getUserId());
+        comment.setUserId(userId);
+        comment.setComment(submitCommentRequest.getCommentText());
+        comment.setTimestamp(Instant.now());
+
+        Optional<User> userOpt = userDao.findByUserId(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            comment.setUserName(user.getFirstName() + " " + user.getLastName());
+        } else {
+            int firstDashIndex = userId.indexOf('-');
+            comment.setUserName(userId.substring(0, firstDashIndex));
+        }
+
+        Comment savedComment = commentDao.save(comment);
+        
+        CommentResponse response = CommentResponse.fromComment(savedComment);
+        
+        logger.info("Comment submitted successfully. ID: {}", savedComment.getCommentId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Get comments for a video
+     * /videos/${videoId}/comments?page=${page}&pageSize=${pageSize}
+     */
+    @GetMapping("/{videoId}/comments")
+    public ResponseEntity<CommentsDataResponse> getCommentsByVideo(
+            @PathVariable String videoId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+
+        // rudimentary limit calculation, for now
+        int limit = pageSize * page;
+
+        List<Comment> comments = commentDao.findByVideoId(videoId, limit);
+        List<CommentResponse> commentRespList = new ArrayList<>();
+        for (Comment comment : comments) {
+            CommentResponse commentResp = CommentResponse.fromComment(comment);
+
+            Optional<User> userOpt = userDao.findByUserId(comment.getUserId());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                commentResp.setFirstName(user.getFirstName());
+                commentResp.setLastName(user.getLastName());
+            } else {
+                commentResp.setFirstName("anonymous");
+                commentResp.setLastName("user");
+            }
+
+            commentRespList.add(commentResp);
+        }
+
+        CommentsDataResponse response = new CommentsDataResponse(commentRespList);
+
+        return ResponseEntity.ok(response);
+    }
+
+        /**
+     * Delete a comment
+     */
+    @DeleteMapping("/comment/{commentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteComment(
+        @PathVariable String commentId) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        String userId = userDetails.getUserId();
+
+        Optional<Comment> comment = commentDao.findByCommentId(commentId);
+
+        // check if the comment exists
+        if (comment.isPresent()) {
+            // Check if the authenticated user owns the comment
+            if (comment.get().getUserId().equals(userId)) { 
+                commentDao.deleteByCommentId(commentId);
+            } else {
+                Optional<User> user = userDao.findByUserId(userId);
+
+                if (user.get().getRole().equals("ADMIN")) {
+                    commentDao.deleteByCommentId(commentId);
+                } else {
+                    return ResponseEntity
+                            .status(HttpStatus.FORBIDDEN)
+                            .body("You are not authorized to delete this comment");
+                }    
+            }
+        }
+        return ResponseEntity.ok().build();
     }
 } 

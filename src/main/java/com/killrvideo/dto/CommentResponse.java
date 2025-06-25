@@ -4,19 +4,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 
 public class CommentResponse {
-    @JsonProperty("comment_id")
+    @JsonProperty("commentid")
     private String commentId;
     
-    @JsonProperty("video_id")
+    @JsonProperty("videoid")
     private String videoId;
     
-    @JsonProperty("user_id")
+    @JsonProperty("userid")
     private String userId;
-    
+
     private String comment;
     
     private Instant timestamp;
     
+    @JsonProperty("sentiment_score")
+    private float sentimentScore;
+
+    private String firstName;
+
+    private String lastName;
+
     // Additional metadata fields
     @JsonProperty("user_name")
     private String userName;  // Combination of user's first and last name
@@ -46,6 +53,18 @@ public class CommentResponse {
         return userName;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public float getSentimentScore() {
+        return sentimentScore;
+    }
+
     // Setters
     public void setCommentId(String commentId) {
         this.commentId = commentId;
@@ -71,6 +90,18 @@ public class CommentResponse {
         this.userName = userName;
     }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setSentimentScore(float sentimentScore) {
+        this.sentimentScore = sentimentScore;
+    }
+
     // Static factory method to create from Comment
     public static CommentResponse fromComment(Comment comment) {
         CommentResponse response = new CommentResponse();
@@ -79,6 +110,13 @@ public class CommentResponse {
         response.setUserId(comment.getUserId());
         response.setComment(comment.getComment());
         response.setTimestamp(comment.getTimestamp());
+
+        if (comment.getUserName() == null) {
+            String userId = comment.getUserId();
+            int firstDashIndex = userId.indexOf('-');
+            comment.setUserName(userId.substring(0, firstDashIndex));
+        }
+        response.setUserName(comment.getUserName());
         // Additional fields will be set by the service layer
         return response;
     }
