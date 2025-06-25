@@ -48,7 +48,6 @@ public class RecommendationService {
         // Find similar videos using vector search
         // Add 1 to limit because the source video might be included
         return videoDao.findByVector(sourceVector, limit + 1)
-            .all()
             .stream()
             .filter(video -> !video.getVideoId().equals(videoId)) // Exclude source video
             .limit(limit)

@@ -34,7 +34,7 @@ public class Video {
     private Instant deletedAt;
 
     private String processingStatus = "PENDING";
-    private int views = 0;
+    private long views;
 
     @JsonProperty("youtube_id")
     private String youtubeId;
@@ -88,7 +88,7 @@ public class Video {
         return processingStatus;
     }
 
-    public int getViews() {
+    public long getViews() {
         return views;
     }
 
@@ -145,7 +145,7 @@ public class Video {
         this.processingStatus = processingStatus;
     }
 
-    public void setViews(int views) {
+    public void setViews(long views) {
         this.views = views;
     }
 

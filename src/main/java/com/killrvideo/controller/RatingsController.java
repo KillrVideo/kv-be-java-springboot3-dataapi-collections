@@ -38,7 +38,7 @@ public class RatingsController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> submitRating(
             @PathVariable String videoId,
-            @Valid @RequestBody String rating) {
+            @Valid @RequestBody RatingRequestBody body) {
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
@@ -53,7 +53,7 @@ public class RatingsController {
             if (existingRating.isPresent()) {
                 // Update existing rating
                 ratingDTO = existingRating.get();
-                ratingDTO.setRating(rating);
+                ratingDTO.setRating(body.getRating().toString());
                 ratingDao.update(ratingDTO);
                 logger.info("Updated rating for video: {} by user: {}", videoId, userId);
             } else {
@@ -61,7 +61,7 @@ public class RatingsController {
                 ratingDTO = new Rating();
                 ratingDTO.setVideoId(videoId);
                 ratingDTO.setUserId(userId);
-                ratingDTO.setRating(rating);
+                ratingDTO.setRating(body.getRating().toString());
                 ratingDao.save(ratingDTO);
                 logger.info("Created new rating for video: {} by user: {}", videoId, userId);
             }
@@ -140,3 +140,15 @@ public class RatingsController {
         }
     }
 } 
+
+class RatingRequestBody {
+    private Integer rating;
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+}

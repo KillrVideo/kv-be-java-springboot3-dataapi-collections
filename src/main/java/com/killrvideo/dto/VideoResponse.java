@@ -35,8 +35,7 @@ public class VideoResponse {
     
     private long commentCount;
 
-    //@JsonProperty("views")
-    private long viewCount;
+    private long views;
     
     //JsonProperty("processing_status")
     private String processingStatus;  // e.g., "PENDING", "COMPLETED", "FAILED"
@@ -95,12 +94,12 @@ public class VideoResponse {
         return commentCount;
     }
 
-    public long getViewCount() {
-        return viewCount;
+    public long getViews() {
+        return views;
     }
 
-    public void setViewCount(long viewCount) {
-        this.viewCount = viewCount;
+    public void setViews(long viewCount) {
+        this.views = viewCount;
     }
 
     public String getProcessingStatus() {
@@ -195,6 +194,7 @@ public class VideoResponse {
         response.setAddedDate(video.getAddedDate());
         response.setVector(video.getVector());
         response.setYoutubeVideoId(video.getYoutubeId());
+        response.setViews(video.getViews());
         // Additional fields will be set by the service layer
         // username, viewCount, commentCount, processingStatus
         return response;

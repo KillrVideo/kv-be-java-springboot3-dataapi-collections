@@ -1,10 +1,9 @@
 package com.killrvideo.dao;
 
-import com.datastax.astra.client.Collection;
-import com.datastax.astra.client.Database;
-import com.datastax.astra.client.model.Document;
-
-import static com.datastax.astra.client.model.Filters.eq;
+import com.datastax.astra.client.collections.Collection;
+import com.datastax.astra.client.databases.Database;
+import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.collections.definition.documents.Document;
 
 import com.killrvideo.dto.User;
 
@@ -43,7 +42,7 @@ public class UserDao {
 
     public Optional<User> findByUserId(String userId) {
         try {
-            Optional<Document> doc = userCollection.findOne(eq("user_id", userId));
+            Optional<Document> doc = userCollection.findOne(Filters.eq("user_id", userId));
             if (doc.isPresent()) {
                 User user = toUser(doc.get());
                 return Optional.ofNullable(user);
@@ -56,7 +55,7 @@ public class UserDao {
 
     public Optional<User> findByEmail(String email) {
         try {
-        Optional<Document> doc = userCollection.findOne(eq("email", email));
+        Optional<Document> doc = userCollection.findOne(Filters.eq("email", email));
         if (doc.isPresent()) {
             User user = toUser(doc.get());
             return Optional.ofNullable(user);
@@ -75,7 +74,7 @@ public class UserDao {
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("User ID cannot be null for update");
         }
-        userCollection.replaceOne(eq("user_id", user.getUserId()), toDocument(user));
+        userCollection.replaceOne(Filters.eq("user_id", user.getUserId()), toDocument(user));
     }
 
     private Document toDocument(User user) {
