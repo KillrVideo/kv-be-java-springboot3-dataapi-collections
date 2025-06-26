@@ -39,13 +39,13 @@ mvn clean package
 ```
 
 Database collections:
-	 - Create a new keyspace named `killrvideo_dataapi`.
-	 - Create the following non-vector-enabled collections:
-	 	 - comments
-	 	 - users
-	 	 - ratings
-	 - Create the following vector-enabled collection:
-	 	 - videos (with a 384-dimensional vector)
+1. Create a new keyspace named `killrvideo_dataapi`.
+2. Create the following non-vector-enabled collections:
+ - comments
+ - users
+ - ratings
+3. Create the following vector-enabled collection:
+ - videos (with a 384-dimensional vector)
 
 Environment variables (via `export`):
 
