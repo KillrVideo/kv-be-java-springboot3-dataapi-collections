@@ -7,7 +7,7 @@ public class RatingSummary {
     private String videoId;
     
     @JsonProperty("average_rating")
-    private float averageRating;
+    private String averageRating;
     
     @JsonProperty("rating_count")
     private int ratingCount;
@@ -22,11 +22,11 @@ public class RatingSummary {
         this.videoId = videoId;
     }
 
-    public float getAverageRating() {
+    public String getAverageRating() {
         return averageRating;
     }
 
-    public void setAverageRating(float averageRating) {
+    public void setAverageRating(String averageRating) {
         this.averageRating = averageRating;
     }
 
