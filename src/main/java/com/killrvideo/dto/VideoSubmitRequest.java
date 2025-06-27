@@ -1,7 +1,6 @@
 package com.killrvideo.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 
 public class VideoSubmitRequest {
@@ -10,16 +9,21 @@ public class VideoSubmitRequest {
              message = "Invalid YouTube URL format")
     private String youtubeUrl;
 
-    @Size(min = 1, max = 150, message = "Title must be between 1 and 150 characters")
-    private String title;
+    private String description;
+
+    private String[] tags;
 
     // Getters
     public String getYoutubeUrl() {
         return youtubeUrl;
     }
 
-    public String getTitle() {
-        return title;
+    public String getDescription() {
+        return description;
+    }
+
+    public String[] getTags() {
+        return tags;
     }
 
     // Setters
@@ -27,7 +31,11 @@ public class VideoSubmitRequest {
         this.youtubeUrl = youtubeUrl;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
     }
 } 
