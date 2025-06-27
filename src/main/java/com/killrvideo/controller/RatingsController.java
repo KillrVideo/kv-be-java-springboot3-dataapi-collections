@@ -97,12 +97,12 @@ public class RatingsController {
             summary.setRatingCount(ratings.size());
             
             if (ratings.isEmpty()) {
-                summary.setAverageRating(0.0f);
+                summary.setAverageRating("0.0");
             } else {
                 float totalRating = ratings.stream()
                     .mapToInt(Rating::getRatingAsInt)
                     .sum();
-                summary.setAverageRating(totalRating / ratings.size());
+                summary.setAverageRating(String.format("%.1f",(totalRating / ratings.size())));
             }
 
             logger.debug("Retrieved rating summary for video: {} - avg: {}, count: {}", 
@@ -126,7 +126,7 @@ public class RatingsController {
             RatingSummary summary = new RatingSummary();
             summary.setVideoId(videoId);
             summary.setRatingCount(1);
-            summary.setAverageRating(userRating.get().getRatingAsInt());
+            summary.setAverageRating(String.format("%.1f", userRating.get().getRatingAsInt()));
             summary.setCurrentUserRating(userRating.get().getRatingAsInt());
             return ResponseEntity.ok(new RatingSummaryResponse(summary));
 
@@ -134,7 +134,7 @@ public class RatingsController {
             RatingSummary summary = new RatingSummary();
             summary.setVideoId(videoId);
             summary.setRatingCount(0);
-            summary.setAverageRating(0.0f);
+            summary.setAverageRating("0.0");
             summary.setCurrentUserRating(0);
             return ResponseEntity.ok(new RatingSummaryResponse(summary));
         }

@@ -6,7 +6,7 @@ import java.util.List;
 public class RatingResponse {
     
     private List<RatingConversion> data;
-    private float averageRating;
+    private String averageRating;
 
     public RatingResponse(List<Rating> ratings) {
         List<RatingConversion> dataResponse = new ArrayList<>();
@@ -17,7 +17,8 @@ public class RatingResponse {
             totalRating += localRating.getAverageRating();
         }
 
-        this.averageRating = totalRating / ratings.size();
+        float avgRatingFlt = totalRating / ratings.size();
+        this.averageRating = String.format("%.1f", avgRatingFlt);
         this.data = dataResponse;
     }
 
@@ -25,7 +26,7 @@ public class RatingResponse {
         return data;
     }
 
-    public float getAverageRating() {
+    public String getAverageRating() {
         return averageRating;
     }
 }

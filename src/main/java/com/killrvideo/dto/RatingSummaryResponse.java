@@ -3,7 +3,7 @@ package com.killrvideo.dto;
 public class RatingSummaryResponse {
     
     private RatingSummaryConversion data;
-    private float averageRating;
+    private String averageRating;
     private float currentUserRating;
 
     public RatingSummaryResponse(RatingSummary data) {
@@ -15,7 +15,7 @@ public class RatingSummaryResponse {
         return data;
     }
 
-    public float getAverageRating() {
+    public String getAverageRating() {
         return averageRating;
     }
 
@@ -30,7 +30,7 @@ public class RatingSummaryResponse {
 
 class RatingSummaryConversion {
     private String videoId;
-    private float averageRating;
+    private String averageRating;
     private int ratingCount;
 
     public RatingSummaryConversion(RatingSummary rating) {
@@ -43,7 +43,7 @@ class RatingSummaryConversion {
         return videoId;
     }
 
-    public float getAverageRating() {
+    public String getAverageRating() {
         return averageRating;
     }
     
