@@ -10,9 +10,14 @@ import com.killrvideo.service.StorageService;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
+
+import io.jsonwebtoken.lang.Arrays;
+
 import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,18 +25,36 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/videos") // Relative to /api/v1 context path
 public class VideoController {
     private static final Logger logger = LoggerFactory.getLogger(VideoController.class);
+
+    // A collection of regex patterns that match the majority of YouTube URL formats
+    // and capture the video ID in a named group called "id".
+    private List<Pattern> _YOUTUBE_PATTERNS = new ArrayList<>();
+
+    @Value("${killrvideo.youtube.api-key}")
+    private String YOUTUBE_API_KEY;
+
+    private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={YOUTUBE_ID}&key={API_KEY}";
 
     @Autowired
     private VideoDao videoDao;
@@ -49,6 +72,14 @@ public class VideoController {
 
     private static EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
 
+    public VideoController() {
+        _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtu\\.be/(?<id>[A-Za-z0-9_-]{11})"));
+        _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/watch\\?v=(?<id>[A-Za-z0-9_-]{11})"));
+        _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/embed/(?<id>[A-Za-z0-9_-]{11})"));
+        _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/v/(?<id>[A-Za-z0-9_-]{11})"));
+        _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtube\\.com/shorts/(?<id>[A-Za-z0-9_-]{11})"));
+    }
+
     /**
      * Submit a new video
      */
@@ -62,24 +93,40 @@ public class VideoController {
         String userId = userDetails.getUserId();
 
         try {
-            // Create video metadata
+            // Create video with properties from request
             Video video = new Video();
-            video.setVideoId(UUID.randomUUID().toString());
-            video.setUserId(userId);
-            video.setName(submitRequest.getTitle() != null ? submitRequest.getTitle() : "Untitled Video");
-            video.setDescription(null); // Will be updated during processing
-            video.setTags(null); // Will be updated during processing
+
+            Set<String> tags = new HashSet<>(Arrays.asList(submitRequest.getTags()));
+
+            video.setDescription(submitRequest.getDescription());
+            video.setTags(tags);
             video.setLocation(submitRequest.getYoutubeUrl());
+
+            // parse youtube id from url
+            String youtubeId = extractYouTubeId(submitRequest.getYoutubeUrl());
+            video.setYoutubeId(youtubeId);
+
+            // fetch youtube metadata
+            YoutubeMetadata youtubeMetadata = fetchYoutubeMetadata(youtubeId);
+
+            logger.info("Youtube metadata.title: {}", youtubeMetadata.getTitle());
+            logger.info("Youtube metadata.thumbnailUrl: {}", youtubeMetadata.getThumbnailUrl());
+
+            video.setName(youtubeMetadata.getTitle());
+            video.setPreviewImageLocation(youtubeMetadata.getThumbnailUrl());
+
+            // generate remaining properties
             video.setAddedDate(Instant.now());
             video.setProcessingStatus("PENDING");
+            video.setVideoId(UUID.randomUUID().toString());
+            video.setUserId(userId);
             
             // Generate the embedding for the video
             String videoText = video.getName();
             float[] videoVector = embeddingModel.embed(videoText).content().vector();
             video.setVector(videoVector);
 
-            video.setPreviewImageLocation(null);
-
+            // save video to database
             Video savedVideo = videoDao.save(video);
             
             VideoResponse response = VideoResponse.fromVideo(savedVideo);
@@ -391,5 +438,96 @@ public class VideoController {
             }
         }
         return ResponseEntity.ok().build();
+    }
+
+    private String extractYouTubeId(String youtubeUrl) {
+
+        for (Pattern pattern : _YOUTUBE_PATTERNS) {
+            Matcher match = pattern.matcher(youtubeUrl);
+            if (match.find()) {
+                return match.group("id");
+            }
+        }
+        return null;
+    }
+
+    private YoutubeMetadata fetchYoutubeMetadata(String youtubeId) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = YOUTUBE_API_URL
+                    .replace("{YOUTUBE_ID}", youtubeId)
+                    .replace("{API_KEY}", YOUTUBE_API_KEY);
+
+            logger.debug("Fetching YouTube metadata for ID: {}", youtubeId);
+            
+            String response = restTemplate.getForObject(url, String.class);
+            
+            if (response == null) {
+                logger.warn("Received null response from YouTube API for ID: {}", youtubeId);
+                return null;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(response);
+            
+            // Check if the API returned any items
+            JsonNode items = rootNode.get("items");
+            if (items == null || items.size() == 0) {
+                logger.warn("No video found for YouTube ID: {}", youtubeId);
+                return null;
+            }
+
+            JsonNode videoInfo = items.get(0);
+            JsonNode snippet = videoInfo.get("snippet");
+            
+            if (snippet == null) {
+                logger.warn("No snippet found in YouTube API response for ID: {}", youtubeId);
+                return null;
+            }
+
+            YoutubeMetadata metadata = new YoutubeMetadata();
+            
+            // Extract title
+            if (snippet.has("title")) {
+                metadata.setTitle(snippet.get("title").asText());
+            }
+            
+            // Extract description
+            if (snippet.has("description")) {
+                metadata.setDescription(snippet.get("description").asText());
+            }
+            
+            // Extract thumbnail URL (prefer high quality, fallback to default)
+            if (snippet.has("thumbnails")) {
+                JsonNode thumbnails = snippet.get("thumbnails");
+                if (thumbnails.has("high")) {
+                    metadata.setThumbnailUrl(thumbnails.get("high").get("url").asText());
+                } else if (thumbnails.has("medium")) {
+                    metadata.setThumbnailUrl(thumbnails.get("medium").get("url").asText());
+                } else if (thumbnails.has("default")) {
+                    metadata.setThumbnailUrl(thumbnails.get("default").get("url").asText());
+                }
+            }
+            
+            // Extract tags
+            if (snippet.has("tags")) {
+                JsonNode tagsNode = snippet.get("tags");
+                List<String> tagsList = new ArrayList<>();
+                for (JsonNode tag : tagsNode) {
+                    tagsList.add(tag.asText());
+                }
+                metadata.setTags(tagsList.toArray(new String[0]));
+            }
+
+            logger.info("Successfully fetched YouTube metadata for ID: {}", youtubeId);
+            return metadata;
+
+        } catch (HttpClientErrorException e) {
+            logger.error("HTTP error fetching YouTube metadata for ID {}: {}", youtubeId, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            logger.error("Error fetching YouTube metadata for ID {}: {}", youtubeId, e.getMessage());
+            return null;
+        }
     }
 } 
