@@ -6,7 +6,7 @@ import com.killrvideo.dao.CommentDao;
 import com.killrvideo.dao.UserDao;
 import com.killrvideo.dto.*;
 import com.killrvideo.security.UserDetailsImpl;
-import com.killrvideo.service.StorageService;
+//import com.killrvideo.service.StorageService;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
@@ -68,7 +68,7 @@ public class VideoController {
     @Autowired
     private CommentDao commentDao;
 
-    private StorageService storageService = new StorageService();
+//    private StorageService storageService = new StorageService();
 
     private static EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
 
@@ -117,6 +117,7 @@ public class VideoController {
 
             // generate remaining properties
             video.setAddedDate(Instant.now());
+            video.setLastViewed(Instant.now());
             video.setProcessingStatus("PENDING");
             video.setVideoId(UUID.randomUUID().toString());
             video.setUserId(userId);
@@ -182,10 +183,12 @@ public class VideoController {
         Optional<Video> videoOpt = videoDao.findByVideoId(videoId, false);
 
         if (videoOpt.isPresent()) {
+            Instant now = Instant.now();
             Video video = videoOpt.get();
             long views = video.getViews() + 1;
             video.setViews(views);
-            videoDao.updateViews(videoId,views);
+            video.setLastViewed(now);
+            videoDao.updateViews(videoId,views,now);
             return ResponseEntity.ok(VideoResponse.fromVideo(video));
         }
 
@@ -229,6 +232,37 @@ public class VideoController {
         LatestVideosResponse response = new LatestVideosResponse(videos);
 
         return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * Get trending videos
+     */
+    @GetMapping("/trending")
+    public ResponseEntity<List<VideoResponse>> getTrendingVideos(
+            @RequestParam(defaultValue = "1") int days, @RequestParam(defaultValue = "10") int limit) {
+        List<String> uniqueVideoIDs = new ArrayList<>();
+        List<Video> videos = videoDao.findTrending(days, limit);
+        List<VideoResponse> videoResponses = new ArrayList<>();
+
+        for (Video video : videos) {
+            uniqueVideoIDs.add(video.getVideoId());
+            VideoResponse videoResponse = VideoResponse.fromVideo(video);
+            videoResponses.add(videoResponse);
+        }
+
+        if (videoResponses.size() < limit) {
+            // if we can't meet the limit from trending, then get more from latest
+            List<Video> moreVideos = videoDao.findLatest(limit * 2);
+            for (Video video : moreVideos) {
+                if (!uniqueVideoIDs.contains(video.getVideoId())) {
+                    VideoResponse videoResponse = VideoResponse.fromVideo(video);
+                    videoResponses.add(videoResponse);
+                }
+            }
+        }
+
+        return ResponseEntity.ok(videoResponses);
     }
 
     /**
@@ -428,7 +462,7 @@ public class VideoController {
             } else {
                 Optional<User> user = userDao.findByUserId(userId);
 
-                if (user.get().getRole().equals("ADMIN")) {
+                if (user.get().getRoles().equals("ADMIN")) {
                     commentDao.deleteByCommentId(commentId);
                 } else {
                     return ResponseEntity

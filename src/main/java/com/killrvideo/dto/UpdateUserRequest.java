@@ -18,6 +18,8 @@ public class UpdateUserRequest {
 
     @Size(min = 6, max = 40, message = "Password must be between 6 and 40 characters")
     private String password;
+    
+    private String roles;
 
     // Getters and Setters
     public String getFirstName() {
@@ -50,5 +52,13 @@ public class UpdateUserRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRole(String roles) {
+        this.roles = roles;
     }
 } 
