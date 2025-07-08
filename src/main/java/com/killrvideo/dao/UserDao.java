@@ -3,7 +3,9 @@ package com.killrvideo.dao;
 import com.datastax.astra.client.collections.Collection;
 import com.datastax.astra.client.databases.Database;
 import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.collections.definition.documents.Document;
+import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 
 import com.killrvideo.dto.User;
 
@@ -11,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserDao {
@@ -55,13 +60,18 @@ public class UserDao {
 
     public Optional<User> findByEmail(String email) {
         try {
-        Optional<Document> doc = userCollection.findOne(Filters.eq("email", email));
-        if (doc.isPresent()) {
-            User user = toUser(doc.get());
-            return Optional.ofNullable(user);
+            Optional<Document> doc = userCollection.findOne(Filters.eq("email", email));
+            if (doc.isPresent()) {
+                User user = toUser(doc.get());
+                System.out.println("User found: " + email);
+                return Optional.ofNullable(user);
+            } else {
+                System.out.println("User not found: " + email);
             }
             return Optional.ofNullable(null);
         } catch (Exception e) {
+            System.out.println("Error finding user by email: " + email);
+            System.out.println("Error: " + e.getMessage());
             return Optional.ofNullable(null);
         }
     }
@@ -77,25 +87,47 @@ public class UserDao {
         userCollection.replaceOne(Filters.eq("user_id", user.getUserId()), toDocument(user));
     }
 
+    public List<User> searchUsers(String queryString, int limit) {
+        try {
+
+            Filter filter;
+
+            if (queryString != null){
+                filter = Filters.or(
+                    Filters.eq("email", queryString),
+                    Filters.eq("firstname", queryString),
+                    Filters.eq("lastname", queryString)
+                );
+            } else {
+                return Collections.emptyList();
+            }
+
+            CollectionFindOptions findOptions = new CollectionFindOptions().limit(limit);
+            List<Document> docs = userCollection.find(filter, findOptions).toList();
+            return docs.stream().map(this::toUser).collect(Collectors.toList());
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
     private Document toDocument(User user) {
         return new Document()
             .append("user_id", user.getUserId())
-            .append("first_name", user.getFirstName())
-            .append("last_name", user.getLastName())
+            .append("firstname", user.getFirstName())
+            .append("lastname", user.getLastName())
             .append("email", user.getEmail())
             .append("hashed_password", user.getHashedPassword())
-            .append("role", user.getRole());
+            .append("role", user.getRoles());
     }
 
     private User toUser(Document document) {
         return new User(
             document.getString("user_id"),
-            document.getString("first_name"),
-            document.getString("last_name"),
+            document.getString("firstname"),
+            document.getString("lastname"),
             document.getString("email"),
             document.getString("hashed_password"),
             document.getInstant("created_at"),
-            document.getString("role")
+            document.getString("roles")
         );
     }
 }

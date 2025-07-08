@@ -1,8 +1,6 @@
 package com.killrvideo.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.ArrayList;
 
 public class Rating {
     @JsonProperty("_id")

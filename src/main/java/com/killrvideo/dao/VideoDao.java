@@ -18,10 +18,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 
 @Repository
 public class VideoDao {
@@ -76,15 +78,15 @@ public class VideoDao {
             CollectionFindOneOptions options = new CollectionFindOneOptions();
             options.projection(new Projection("$vector", true));
             Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId), options);
-            if (video.isPresent()) {
-                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
-            }
+            //if (video.isPresent()) {
+            //    logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
+            //}
             return video;
         } else {
             Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId));
-            if (video.isPresent()) {
-                logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId());
-            }
+            //if (video.isPresent()) {
+            //    logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId());
+            //}
             return video;
         }
     }
@@ -100,6 +102,17 @@ public class VideoDao {
         return videoCollection.find(new CollectionFindOptions().sort(Sort.descending("added_date"))
             .limit(limit))
             .toList();
+    }
+
+    public List<Video> findTrending(int days, int limit) {
+
+        Instant cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
+        Filter filter = Filters.gte("last_viewed", cutoff);
+        return videoCollection.find(
+            filter,
+            new CollectionFindOptions().sort(Sort.descending("last_viewed"))
+                .limit(limit))
+                .toList();
     }
 
     /**
@@ -129,9 +142,12 @@ public class VideoDao {
         videoCollection.replaceOne(Filters.eq("video_id", video.getVideoId()), video);
     }
 
-    public void updateViews(String videoId, long views) {
+    public void updateViews(String videoId, long views, Instant lastViewed) {
         logger.debug("Updating views for video with ID: {}", videoId);
-        videoCollection.updateOne(Filters.eq("video_id", videoId), new Update().set("views", views));
+        videoCollection.updateOne(Filters.eq("video_id", videoId),
+            new Update()
+                .set("views", views)
+                .set("last_viewed", lastViewed));
     }
 
     /**
@@ -176,9 +192,13 @@ public class VideoDao {
             throw new IllegalArgumentException("Query vector cannot be null.");
         }
         logger.debug("Finding similar videos with vector search, limit: {}", limit);
+
         return videoCollection.find(
             null,
-            new CollectionFindOptions().sort(Sort.vector(vector)).limit(limit))
+            new CollectionFindOptions()
+                .sort(Sort.vector(vector))
+                .limit(limit)
+            )
             .toList();
     }
 
