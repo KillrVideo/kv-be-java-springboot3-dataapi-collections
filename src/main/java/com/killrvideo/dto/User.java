@@ -10,10 +10,10 @@ public class User {
     @JsonProperty("user_id")
     private String userId;
     
-    @JsonProperty("first_name")
+    @JsonProperty("firstname")
     private String firstName;
     
-    @JsonProperty("last_name")
+    @JsonProperty("lastname")
     private String lastName;
     
     private String email;
@@ -24,16 +24,16 @@ public class User {
     @JsonProperty("created_at")
     private Instant createdAt;
 
-    private String role;
+    private String roles;
 
-    public User(String userId, String firstName, String lastName, String email, String hashedPassword, Instant createdAt, String role) {
+    public User(String userId, String firstName, String lastName, String email, String hashedPassword, Instant createdAt, String roles) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.hashedPassword = hashedPassword;
         this.createdAt = createdAt;
-        this.role = role;
+        this.roles = roles;
     }
 
     public String getUserId() {
@@ -60,8 +60,8 @@ public class User {
         return createdAt;
     }
 
-    public String getRole() {
-        return role;
+    public String getRoles() {
+        return roles;
     }
 
     public void setUserId(String userId) {
@@ -88,7 +88,7 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setRoles(String roles) {
+        this.roles = roles;
     }
 } 

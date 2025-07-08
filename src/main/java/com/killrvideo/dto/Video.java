@@ -36,6 +36,9 @@ public class Video {
     private String processingStatus = "PENDING";
     private long views;
 
+    @JsonProperty("last_viewed")
+    private Instant lastViewed;
+
     @JsonProperty("youtube_id")
     private String youtubeId;
 
@@ -96,6 +99,10 @@ public class Video {
         return youtubeId;
     }
 
+    public Instant getLastViewed() {
+        return lastViewed;
+    }
+
     // Setters
     public void setVideoId(String videoId) {
         this.videoId = videoId;
@@ -151,5 +158,9 @@ public class Video {
 
     public void setYoutubeId(String youtubeId) {
         this.youtubeId = youtubeId;
+    }
+
+    public void setLastViewed(Instant lastViewed) {
+        this.lastViewed = lastViewed;
     }
 } 

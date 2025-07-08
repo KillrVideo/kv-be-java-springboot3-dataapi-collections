@@ -6,12 +6,14 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String createdAt;
+    private String roles;
 
     public UserResponse(User user) {
         this.userId = user.getUserId();
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.roles = user.getRoles();
     }
 
     public String getUserId() {
@@ -32,5 +34,13 @@ public class UserResponse {
 
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
     }
 }
