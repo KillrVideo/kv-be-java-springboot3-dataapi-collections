@@ -1,4 +1,7 @@
 # KillrVideo v2 - Java Spring Boot Backend
+
+[![Build KillrVideo Java backend](https://github.com/aar0np/killrvideo-java-2025/actions/workflows/build.yaml/badge.svg)](https://github.com/aar0np/killrvideo-java-2025/actions/workflows/build.yaml)
+
 Date: June 2025
 
 A reference backend for the KillrVideo sample application rebuilt for 2025 using **Java**, **Spring Boot** and **DataStax Astra DB**.
