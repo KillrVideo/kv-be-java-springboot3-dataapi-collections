@@ -1,6 +1,6 @@
 # KillrVideo v2 - Java Spring Boot Backend
 
-[![Build KillrVideo Java backend](https://github.com/aar0np/killrvideo-java-2025/actions/workflows/build.yaml/badge.svg)](https://github.com/aar0np/killrvideo-java-2025/actions/workflows/build.yaml)
+[![Build KillrVideo Java backend](https://github.com/KillrVideo/kv-be-java-springboot3-dataapi-collections/actions/workflows/build.yaml/badge.svg)](https://github.com/KillrVideo/kv-be-java-springboot3-dataapi-collections/actions/workflows/build.yaml)
 
 Date: June 2025
 
