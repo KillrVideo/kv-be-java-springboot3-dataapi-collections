@@ -1,9 +1,7 @@
 name: Build KillrVideo Java backend
 on:
-    push:
-      branches: [ "main" ]
-    merge:
-      branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 jobs:
   build:
     steps:
