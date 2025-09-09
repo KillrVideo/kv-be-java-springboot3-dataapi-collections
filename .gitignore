@@ -39,6 +39,3 @@ build/
 ### VS Code ###
 .vscode/
 
-### Maven ###
-.mvn
-mvn*
