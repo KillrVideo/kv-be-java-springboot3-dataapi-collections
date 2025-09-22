@@ -1,0 +1,24 @@
+[Unit]
+Description=KillrVideo-Java-backend service
+After=syslog.target network.target
+
+[Service]
+SuccessExitStatus=143
+
+User=itzuser
+Group=itzuser
+
+Type=simple
+
+Environment="YOUTUBE_API_KEY=YOUTUBEAPIKEY"
+Environment="ASTRA_DB_API_ENDPOINT=ASTRADBAPIENDPOINT"
+Environment="ASTRA_DB_APPLICATION_TOKEN=ASTRADBAPPLICATIONTOKEN"
+Environment="ASTRA_DB_NAMESPACE=killrvideo_dataapi"
+
+WorkingDirectory=/home/itzuser/killrvideo-java-2025/target
+ExecStart=/usr/bin/java -jar killrvideo-java-service-1.0.0-SNAPSHOT.jar
+ExecStop=/bin/kill -15 $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+
