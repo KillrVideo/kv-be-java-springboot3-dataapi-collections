@@ -21,8 +21,8 @@ public class RatingDao {
 
     @Autowired
     public RatingDao(Database killrVideoDatabase) {
-        this.ratingCollection = killrVideoDatabase.getCollection("ratings", Rating.class);
-        logger.info("Initialized RatingDao with 'ratings' collection");
+        this.ratingCollection = killrVideoDatabase.getCollection("video_ratings", Rating.class);
+        logger.info("Initialized RatingDao with 'video_ratings' collection");
     }
 
     /**
@@ -68,7 +68,7 @@ public class RatingDao {
     public List<Rating> findByVideoId(String videoId) {
         logger.debug("Finding all ratings for video: {}", videoId);
         return ratingCollection.find(
-            Filters.eq("video_id", videoId)).toList();
+            Filters.eq("videoid", videoId)).toList();
     }
 
     /**
