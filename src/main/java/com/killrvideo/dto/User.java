@@ -22,11 +22,11 @@ public class User {
     private String hashedPassword;
     
     @JsonProperty("created_at")
-    private Instant createdAt;
+    private String createdAt;
 
     private String roles;
 
-    public User(String userId, String firstName, String lastName, String email, String hashedPassword, Instant createdAt, String roles) {
+    public User(String userId, String firstName, String lastName, String email, String hashedPassword, String createdAt, String roles) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -56,7 +56,7 @@ public class User {
         return hashedPassword;
     }
 
-    public Instant getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
@@ -84,7 +84,7 @@ public class User {
         this.hashedPassword = hashedPassword;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
