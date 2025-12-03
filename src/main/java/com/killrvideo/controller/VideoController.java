@@ -366,13 +366,29 @@ public class VideoController {
         if (sourceVideoOpt.isPresent()) {
             Video sourceVideo = sourceVideoOpt.get();
 
-            List<VideoResponse> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1)
-                .stream()
-                .filter(video -> !video.getVideoid().equals(videoId))
-                .limit(limit)
-                .map(VideoResponse::fromVideo)
-                .toList();
-            return ResponseEntity.ok(similarVideos);
+            List<Video> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1);
+            List<VideoResponse> returnVal = new ArrayList<>();
+            
+            for (Video video : similarVideos) {
+            	VideoResponse vResp = VideoResponse.fromVideo(video);
+            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
+            	
+                if (vRatings.size() > 0) {
+                    int ratingCount = vRatings.size();
+                    int totalRating = 0;
+                    for (Rating rating : vRatings) {
+                        totalRating += rating.getRatingAsInt();
+                    }
+
+                    vResp.setRating(totalRating / ratingCount);
+                } else {
+                	vResp.setRating(0.0f);
+                }
+                
+                returnVal.add(vResp);
+            }
+                        
+            return ResponseEntity.ok(returnVal);
         } else {
             return ResponseEntity.notFound().build();
         }
