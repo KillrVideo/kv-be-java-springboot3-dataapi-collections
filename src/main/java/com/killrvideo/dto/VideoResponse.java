@@ -1,7 +1,9 @@
 package com.killrvideo.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
+//import java.time.Instant;
 import java.util.Set;
 
 public class VideoResponse {
@@ -28,7 +30,10 @@ public class VideoResponse {
     
     @JsonProperty("submittedAt")
     private Instant addedDate;
-    
+
+    @JsonProperty("uploadDate")
+    private Instant uploadDate;
+
     // Additional metadata fields
     @JsonProperty("creator")
     private String userName;  // Combination of user's first and last name
@@ -84,6 +89,10 @@ public class VideoResponse {
 
     public Instant getAddedDate() {
         return addedDate;
+    }
+    
+    public Instant getUploadDate() {
+        return uploadDate;
     }
 
     public String getUserName() {
@@ -148,6 +157,10 @@ public class VideoResponse {
         this.addedDate = addedDate;
     }
 
+    public void setUploadDate(Instant uploadDate) {
+        this.uploadDate = addedDate;
+    }
+
     public void setUserName(String userName) {
         this.userName = userName;
     }
@@ -183,18 +196,19 @@ public class VideoResponse {
     // Static factory method to create from Video
     public static VideoResponse fromVideo(Video video) {
         VideoResponse response = new VideoResponse();
-        response.setKey(video.getVideoId());
-        response.setVideoId(video.getVideoId());
-        response.setUserId(video.getUserId());
+        response.setKey(video.getVideoid());
+        response.setVideoId(video.getVideoid());
+        response.setUserId(video.getUserid());
         response.setName(video.getName());
         response.setDescription(video.getDescription());
         response.setTags(video.getTags());
         response.setLocation(video.getLocation());
         response.setPreviewImageLocation(video.getPreviewImageLocation());
         response.setAddedDate(video.getAddedDate());
+        response.setUploadDate(video.getAddedDate());
         response.setVector(video.getVector());
         response.setYoutubeVideoId(video.getYoutubeId());
-        response.setViews(video.getViews());
+        response.setViews(video.getStats().getViews());
         // Additional fields will be set by the service layer
         // username, viewCount, commentCount, processingStatus
         return response;

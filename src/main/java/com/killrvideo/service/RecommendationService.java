@@ -49,7 +49,7 @@ public class RecommendationService {
         // Add 1 to limit because the source video might be included
         return videoDao.findByVector(sourceVector, limit + 1)
             .stream()
-            .filter(video -> !video.getVideoId().equals(videoId)) // Exclude source video
+            .filter(video -> !video.getVideoid().equals(videoId)) // Exclude source video
             .limit(limit)
             .map(video -> {
                 RecommendationResponse recommendation = new RecommendationResponse();

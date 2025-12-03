@@ -4,11 +4,14 @@ import com.datastax.astra.client.collections.Collection;
 import com.datastax.astra.client.databases.Database;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.collections.commands.Update;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOneOptions;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
+import com.datastax.astra.client.collections.definition.documents.Document;
 import com.datastax.astra.client.core.query.Projection;
 import com.datastax.astra.client.core.query.Sort;
-import com.datastax.astra.client.collections.commands.Update;
+import com.datastax.astra.client.core.vector.DataAPIVector;
+//import com.datastax.astra.client.collections.commands.Update;
 
 import com.killrvideo.dto.Video;
 
@@ -29,10 +32,12 @@ import java.time.temporal.ChronoUnit;
 public class VideoDao {
     private static final Logger logger = LoggerFactory.getLogger(VideoDao.class);
     private final Collection<Video> videoCollection;
+    //private final Collection<Document> videoDocCollection;
 
     @Autowired
     public VideoDao(Database killrVideoDatabase) {
         this.videoCollection = killrVideoDatabase.getCollection("videos", Video.class);
+        //this.videoDocCollection = killrVideoDatabase.getCollection("videos");
         logger.info("Initialized VideoDao with 'videos' collection");
     }
 
@@ -44,12 +49,12 @@ public class VideoDao {
      * @return The saved video
      */
     public Video save(Video video) {
-        if (video.getVideoId() == null) {
-            video.setVideoId(UUID.randomUUID().toString());
-            logger.debug("Generated new video ID: {}", video.getVideoId());
+        if (video.getVideoid() == null) {
+            video.setVideoid(UUID.randomUUID().toString());
+            logger.debug("Generated new video ID: {}", video.getVideoid());
         }
         videoCollection.insertOne(video);
-        logger.debug("Saved video with ID: {}", video.getVideoId());
+        logger.debug("Saved video with ID: {}", video.getVideoid());
         return video;
     }
 
@@ -59,9 +64,9 @@ public class VideoDao {
      * @param database ID of the video to find
      * @return Optional containing the video if found, empty otherwise
      */
-    public Optional<Video> findById(String videoId) {
-        logger.debug("Finding video by databaseID: {}", videoId);
-        Optional<Video> video = videoCollection.findById(videoId);
+    public Optional<Video> findById(String id) {
+        logger.debug("Finding video by databaseID: {}", id);
+        Optional<Video> video = videoCollection.findById(id);
         return video;
     }
 
@@ -77,16 +82,11 @@ public class VideoDao {
         if (includeVector) {
             CollectionFindOneOptions options = new CollectionFindOneOptions();
             options.projection(new Projection("$vector", true));
-            Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId), options);
-            //if (video.isPresent()) {
-            //    logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId(), video.get().getVector());
-            //}
+            Optional<Video> video = videoCollection.findOne(Filters.eq("videoid", videoId), options);
+
             return video;
         } else {
-            Optional<Video> video = videoCollection.findOne(Filters.eq("video_id", videoId));
-            //if (video.isPresent()) {
-            //    logger.debug("Found video -\n video_id: {}, \n vector: {}", video.get().getVideoId());
-            //}
+            Optional<Video> video = videoCollection.findOne(Filters.eq("videoid", videoId));
             return video;
         }
     }
@@ -125,7 +125,7 @@ public class VideoDao {
     public List<Video> findByUserId(String userId, int limit) {
         logger.debug("Finding videos for user: {}, limit: {}", userId, limit);
         return videoCollection.find(
-            Filters.eq("user_id", userId),
+            Filters.eq("userid", userId),
             new CollectionFindOptions().sort(Sort.descending("added_date"))
             .limit(limit))
             .toList();
@@ -138,13 +138,14 @@ public class VideoDao {
      * @throws IllegalArgumentException if video ID is null
      */
     public void update(Video video) {
-        logger.debug("Updating video with ID: {}", video.getVideoId());
-        videoCollection.replaceOne(Filters.eq("video_id", video.getVideoId()), video);
+    	String videoid = video.getVideoid();
+        logger.debug("Updating video with ID: {}", videoid);
+        videoCollection.replaceOne(Filters.eq("videoid", videoid), video);
     }
 
     public void updateViews(String videoId, long views, Instant lastViewed) {
         logger.debug("Updating views for video with ID: {}", videoId);
-        videoCollection.updateOne(Filters.eq("video_id", videoId),
+        videoCollection.updateOne(Filters.eq("videoid", videoId),
             new Update()
                 .set("views", views)
                 .set("last_viewed", lastViewed));
@@ -157,7 +158,7 @@ public class VideoDao {
      */
     public void deleteById(String videoId) {
         logger.debug("Deleting video with ID: {}", videoId);
-        videoCollection.deleteOne(Filters.eq("video_id", videoId));
+        videoCollection.deleteOne(Filters.eq("videoid", videoId));
     }
 
     /**
@@ -246,5 +247,25 @@ public class VideoDao {
             .distinct()
             .limit(limit)
             .toList();
+    }
+    
+    private Video getVideoFromDoc(Document doc) {
+    	Video video = new Video();
+    	
+    	video.setAddedDate(doc.getInstant("added_date"));
+    	video.setDescription(doc.getString("description"));
+    	video.setName(doc.getString("name"));
+    	video.setUserid(doc.getString("userid"));
+    	video.setVideoid(doc.getString("videoid"));
+    	video.setLocation(doc.getString("location"));
+    	
+    	Optional<DataAPIVector> docVector = doc.getVector();
+    	
+    	//if (docVector.isPresent()) {
+    	//	//var vector = docVector.get()[0].getValue("$binary");
+    	//	video.setVector(docVector.get());
+    	//}
+
+    	return video;
     }
 } 
