@@ -9,8 +9,7 @@ import com.killrvideo.security.UserDetailsImpl;
 //import com.killrvideo.service.StorageService;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
-
+import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import io.jsonwebtoken.lang.Arrays;
 
 import jakarta.validation.Valid;
@@ -70,7 +69,13 @@ public class VideoController {
 
 //    private StorageService storageService = new StorageService();
 
-    private static EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+    //private static EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+    private static EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
+			.accessToken(System.getenv("HF_API_KEY"))
+			.baseUrl("https://router.huggingface.co/hf-inference/")
+			.modelId("ibm-granite/granite-embedding-30m-english")
+			.waitForModel(true)
+			.build();
 
     public VideoController() {
         _YOUTUBE_PATTERNS.add(Pattern.compile("(?:https?://)?(?:www\\.)?youtu\\.be/(?<id>[A-Za-z0-9_-]{11})"));
@@ -117,10 +122,10 @@ public class VideoController {
 
             // generate remaining properties
             video.setAddedDate(Instant.now());
-            video.setLastViewed(Instant.now());
+            //video.setLastViewed(Instant.now().toString());
             video.setProcessingStatus("PENDING");
-            video.setVideoId(UUID.randomUUID().toString());
-            video.setUserId(userId);
+            video.setVideoid(UUID.randomUUID().toString());
+            video.setUserid(userId);
             
             // Generate the embedding for the video
             String videoText = video.getName();
@@ -133,7 +138,7 @@ public class VideoController {
             VideoResponse response = VideoResponse.fromVideo(savedVideo);
             response.setProcessingStatus("PENDING");
             
-            logger.info("Video submitted successfully. ID: {}", savedVideo.getVideoId());
+            logger.info("Video submitted successfully. ID: {}", savedVideo.getVideoid());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (IllegalArgumentException e) {
@@ -154,7 +159,7 @@ public class VideoController {
         return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
                     VideoStatusResponse response = new VideoStatusResponse();
-                    response.setVideoId(video.getVideoId());
+                    response.setVideoId(video.getVideoid());
                     response.setStatus(video.getProcessingStatus());
                     return ResponseEntity.ok(response);
                 })
@@ -166,12 +171,18 @@ public class VideoController {
      */
     @GetMapping("/id/{videoId}")
     public ResponseEntity<VideoResponse> getVideoDetails(@PathVariable String videoId) {
-        return videoDao.findByVideoId(videoId, false)
-                .map(video -> {
-                    VideoResponse response = VideoResponse.fromVideo(video);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Video> video = videoDao.findByVideoId(videoId, false);
+        if (video.isPresent()) {
+        	VideoResponse response = VideoResponse.fromVideo(video.get());
+        	
+        	if (response.getYoutubeVideoId() == null || response.getYoutubeVideoId().isEmpty()) {
+        		response.setYoutubeVideoId(extractYouTubeId(response.getLocation()));
+        	}
+        	
+        	return ResponseEntity.ok(response);
+        }
+        
+        return ResponseEntity.notFound().build();
     }
 
     /**
@@ -180,15 +191,16 @@ public class VideoController {
     //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
     @PostMapping("/id/{videoId}/view")
     public ResponseEntity<?> recordVideoView(@PathVariable String videoId) {
-        Optional<Video> videoOpt = videoDao.findByVideoId(videoId, false);
+        Optional<Video> videoOpt = videoDao.findByVideoId(videoId, true);
 
         if (videoOpt.isPresent()) {
             Instant now = Instant.now();
             Video video = videoOpt.get();
-            long views = video.getViews() + 1;
-            video.setViews(views);
-            video.setLastViewed(now);
+            int views = video.getStats().getViews() + 1;
+            video.getStats().setViews(views);
+            //video.setLastViewed(now.toString());
             videoDao.updateViews(videoId,views,now);
+            //videoDao.update(video);
             return ResponseEntity.ok(VideoResponse.fromVideo(video));
         }
 
@@ -212,7 +224,7 @@ public class VideoController {
         for (Video video : videoList) {
             VideoResponse videoResponse = VideoResponse.fromVideo(video);
             // Get all ratings for the video
-            List<Rating> ratings = ratingDao.findByVideoId(video.getVideoId());
+            List<Rating> ratings = ratingDao.findByVideoId(video.getVideoid());
 
             if (ratings.size() > 0) {
                 int ratingCount = ratings.size();
@@ -246,7 +258,7 @@ public class VideoController {
         List<VideoResponse> videoResponses = new ArrayList<>();
 
         for (Video video : videos) {
-            uniqueVideoIDs.add(video.getVideoId());
+            uniqueVideoIDs.add(video.getVideoid());
             VideoResponse videoResponse = VideoResponse.fromVideo(video);
             videoResponses.add(videoResponse);
         }
@@ -255,7 +267,7 @@ public class VideoController {
             // if we can't meet the limit from trending, then get more from latest
             List<Video> moreVideos = videoDao.findLatest(limit * 2);
             for (Video video : moreVideos) {
-                if (!uniqueVideoIDs.contains(video.getVideoId())) {
+                if (!uniqueVideoIDs.contains(video.getVideoid())) {
                     VideoResponse videoResponse = VideoResponse.fromVideo(video);
                     videoResponses.add(videoResponse);
                 }
@@ -317,7 +329,7 @@ public class VideoController {
         return videoDao.findByVideoId(videoId, false)
                 .map(video -> {
                     // Check if the authenticated user owns the video
-                    if (!video.getUserId().equals(userDetails.getUserId())) {
+                    if (!video.getUserid().equals(userDetails.getUserId())) {
                         return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
                                 .body("You are not authorized to update this video");
@@ -354,13 +366,29 @@ public class VideoController {
         if (sourceVideoOpt.isPresent()) {
             Video sourceVideo = sourceVideoOpt.get();
 
-            List<VideoResponse> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1)
-                .stream()
-                .filter(video -> !video.getVideoId().equals(videoId))
-                .limit(limit)
-                .map(VideoResponse::fromVideo)
-                .toList();
-            return ResponseEntity.ok(similarVideos);
+            List<Video> similarVideos = videoDao.findByVector(sourceVideo.getVector(), limit + 1);
+            List<VideoResponse> returnVal = new ArrayList<>();
+            
+            for (Video video : similarVideos) {
+            	VideoResponse vResp = VideoResponse.fromVideo(video);
+            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
+            	
+                if (vRatings.size() > 0) {
+                    int ratingCount = vRatings.size();
+                    int totalRating = 0;
+                    for (Rating rating : vRatings) {
+                        totalRating += rating.getRatingAsInt();
+                    }
+
+                    vResp.setRating(totalRating / ratingCount);
+                } else {
+                	vResp.setRating(0.0f);
+                }
+                
+                returnVal.add(vResp);
+            }
+                        
+            return ResponseEntity.ok(returnVal);
         } else {
             return ResponseEntity.notFound().build();
         }

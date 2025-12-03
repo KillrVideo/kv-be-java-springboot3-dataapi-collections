@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
+import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,12 @@ public class SearchController {
 
     // Hugging Face's All-Mini-LmL6-V2 embedding model was used to generate the embeddings for the videos.
     // This model is a small, fast, and accurate embedding model that is suitable for our use case.
-    private static EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+    private static EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
+			.accessToken(System.getenv("HF_API_KEY"))
+			.baseUrl("https://router.huggingface.co/hf-inference/")
+			.modelId("ibm-granite/granite-embedding-30m-english")
+			.waitForModel(true)
+			.build();
 
     @Autowired
     private VideoDao videoDao;

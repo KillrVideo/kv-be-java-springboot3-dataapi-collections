@@ -32,9 +32,9 @@ public class UserDao {
         return user;
     }
 
-    public Optional<User> findById(String userId) {
+    public Optional<User> findById(String id) {
         try {
-            Optional<Document> doc = userCollection.findById(userId);
+            Optional<Document> doc = userCollection.findById(id);
             if (doc.isPresent()) {
                 User user = toUser(doc.get());
                 return Optional.ofNullable(user);
@@ -47,13 +47,14 @@ public class UserDao {
 
     public Optional<User> findByUserId(String userId) {
         try {
-            Optional<Document> doc = userCollection.findOne(Filters.eq("user_id", userId));
+            Optional<Document> doc = userCollection.findOne(Filters.eq("userid", userId));
             if (doc.isPresent()) {
                 User user = toUser(doc.get());
                 return Optional.ofNullable(user);
             }
             return Optional.ofNullable(null);
         } catch (Exception e) {
+        	System.out.printf("Error locating user: [{}]\n" + e.toString(), userId);
             return Optional.ofNullable(null);
         }
     }
@@ -84,7 +85,7 @@ public class UserDao {
         if (user.getUserId() == null) {
             throw new IllegalArgumentException("User ID cannot be null for update");
         }
-        userCollection.replaceOne(Filters.eq("user_id", user.getUserId()), toDocument(user));
+        userCollection.replaceOne(Filters.eq("userid", user.getUserId()), toDocument(user));
     }
 
     public List<User> searchUsers(String queryString, int limit) {
@@ -111,22 +112,23 @@ public class UserDao {
     }
     private Document toDocument(User user) {
         return new Document()
-            .append("user_id", user.getUserId())
+            .append("userid", user.getUserId())
             .append("firstname", user.getFirstName())
             .append("lastname", user.getLastName())
             .append("email", user.getEmail())
             .append("hashed_password", user.getHashedPassword())
-            .append("role", user.getRoles());
+            .append("roles", user.getRoles())
+        	.append("created_date", user.getCreatedAt());
     }
 
     private User toUser(Document document) {
         return new User(
-            document.getString("user_id"),
+            document.getString("userid"),
             document.getString("firstname"),
             document.getString("lastname"),
             document.getString("email"),
             document.getString("hashed_password"),
-            document.getInstant("created_at"),
+            document.getString("created_date"),
             document.getString("roles")
         );
     }

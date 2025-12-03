@@ -83,14 +83,27 @@ public class AuthController {
                 signUpRequest.getLastName(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()),
-                Instant.now(),
+                Instant.now().toString(),
                 "USER"
         );
 
         userDao.save(user);
         logger.info("User registered successfully: {}", user.getEmail());
 
-        return ResponseEntity.ok("User registered successfully!");
+        //return ResponseEntity.ok("User registered successfully!");
+        // log-in new user
+        UsernamePasswordAuthenticationToken authToken =
+        		new UsernamePasswordAuthenticationToken(user.getEmail(), signUpRequest.getPassword());
+        Authentication authentication = authenticationManager.authenticate(authToken);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        JwtResponse response = new JwtResponse(jwt, userDetails.getUserId(), userDetails.getUsername());
+        logger.info("Token created.");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")

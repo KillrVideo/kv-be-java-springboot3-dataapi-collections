@@ -1,15 +1,17 @@
 package com.killrvideo.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
+//import java.time.Instant;
 import java.util.Set;
 
 public class Video {
-    @JsonProperty("video_id")
-    private String videoId;
+    //@JsonProperty("video_id")
+    private String videoid;
     
-    @JsonProperty("user_id")
-    private String userId;
+    //@JsonProperty("user_id")
+    private String userid;
     
     private String name;
     
@@ -27,28 +29,33 @@ public class Video {
     
     @JsonProperty("added_date")
     private Instant addedDate;
+    //private String addedDate;
     
     private boolean deleted;
     
     @JsonProperty("deleted_at")
-    private Instant deletedAt;
+    //private Instant deletedAt;
+    private String deletedAt;
 
     private String processingStatus = "PENDING";
-    private long views;
+    //private long views;
+    
+    private VideoPlaybackStats stats;
 
-    @JsonProperty("last_viewed")
-    private Instant lastViewed;
+//    @JsonProperty("last_viewed")
+    //private Instant lastViewed;
+//    private String lastViewed;
 
     @JsonProperty("youtube_id")
     private String youtubeId;
 
     // Getters
-    public String getVideoId() {
-        return videoId;
+    public String getVideoid() {
+        return videoid;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserid() {
+        return userid;
     }
 
     public String getName() {
@@ -83,7 +90,7 @@ public class Video {
         return deleted;
     }
 
-    public Instant getDeletedAt() {
+    public String getDeletedAt() {
         return deletedAt;
     }
 
@@ -91,25 +98,29 @@ public class Video {
         return processingStatus;
     }
 
-    public long getViews() {
-        return views;
+//    public long getViews() {
+//        return views;
+//    }
+    
+    public VideoPlaybackStats getStats() {
+    	return stats;
     }
 
     public String getYoutubeId() {
         return youtubeId;
     }
 
-    public Instant getLastViewed() {
-        return lastViewed;
-    }
+//    public String getLastViewed() {
+//        return lastViewed;
+//    }
 
     // Setters
-    public void setVideoId(String videoId) {
-        this.videoId = videoId;
+    public void setVideoid(String videoId) {
+        this.videoid = videoId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserid(String userId) {
+        this.userid = userId;
     }
 
     public void setName(String name) {
@@ -144,7 +155,7 @@ public class Video {
         this.deleted = deleted;
     }
 
-    public void setDeletedAt(Instant deletedAt) {
+    public void setDeletedAt(String deletedAt) {
         this.deletedAt = deletedAt;
     }
 
@@ -152,15 +163,19 @@ public class Video {
         this.processingStatus = processingStatus;
     }
 
-    public void setViews(long views) {
-        this.views = views;
+//    public void setViews(long views) {
+//        this.views = views;
+//    }
+    
+    public void setStats(VideoPlaybackStats stats) {
+    	this.stats = stats;
     }
 
     public void setYoutubeId(String youtubeId) {
         this.youtubeId = youtubeId;
     }
 
-    public void setLastViewed(Instant lastViewed) {
-        this.lastViewed = lastViewed;
-    }
+//    public void setLastViewed(String lastViewed) {
+//        this.lastViewed = lastViewed;
+//    }
 } 
