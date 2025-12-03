@@ -4,6 +4,7 @@ import com.datastax.astra.client.collections.Collection;
 import com.datastax.astra.client.databases.Database;
 import com.datastax.astra.client.core.query.Filter;
 import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.collections.commands.Update;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOneOptions;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 import com.datastax.astra.client.collections.definition.documents.Document;
@@ -142,13 +143,13 @@ public class VideoDao {
         videoCollection.replaceOne(Filters.eq("videoid", videoid), video);
     }
 
-//    public void updateViews(String videoId, long views, Instant lastViewed) {
-//        logger.debug("Updating views for video with ID: {}", videoId);
-//        videoCollection.updateOne(Filters.eq("videoid", videoId),
-//            new Update()
-//                .set("views", views)
-//                .set("last_viewed", lastViewed));
-//    }
+    public void updateViews(String videoId, long views, Instant lastViewed) {
+        logger.debug("Updating views for video with ID: {}", videoId);
+        videoCollection.updateOne(Filters.eq("videoid", videoId),
+            new Update()
+                .set("views", views)
+                .set("last_viewed", lastViewed));
+    }
 
     /**
      * Deletes a video by its ID.

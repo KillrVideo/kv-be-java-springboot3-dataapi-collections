@@ -199,8 +199,8 @@ public class VideoController {
             int views = video.getStats().getViews() + 1;
             video.getStats().setViews(views);
             //video.setLastViewed(now.toString());
-            //videoDao.updateViews(videoId,views,now);
-            videoDao.update(video);
+            videoDao.updateViews(videoId,views,now);
+            //videoDao.update(video);
             return ResponseEntity.ok(VideoResponse.fromVideo(video));
         }
 
