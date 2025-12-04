@@ -128,7 +128,7 @@ public class UserDao {
             document.getString("lastname"),
             document.getString("email"),
             document.getString("hashed_password"),
-            document.getString("created_date"),
+            document.getInstant("created_date"),
             document.getString("roles")
         );
     }
