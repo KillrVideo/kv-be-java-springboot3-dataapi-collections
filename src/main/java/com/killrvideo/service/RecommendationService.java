@@ -1,5 +1,6 @@
 package com.killrvideo.service;
 
+import com.datastax.astra.client.core.vector.DataAPIVector;
 import com.killrvideo.dao.VideoDao;
 import com.killrvideo.dto.Video;
 import com.killrvideo.dto.VideoResponse;
@@ -38,7 +39,7 @@ public class RecommendationService {
         }
 
         Video sourceVideo = sourceVideoOpt.get();
-        float[] sourceVector = sourceVideo.getVector();
+        DataAPIVector sourceVector = sourceVideo.getVector();
 
         if (sourceVector == null) {
             logger.warn("Source video has no vector: {}", videoId);
