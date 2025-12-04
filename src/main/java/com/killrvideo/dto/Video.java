@@ -1,5 +1,6 @@
 package com.killrvideo.dto;
 
+import com.datastax.astra.client.core.vector.DataAPIVector;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
@@ -25,7 +26,8 @@ public class Video {
     private String previewImageLocation;
     
     @JsonProperty("$vector")
-    private float[] vector;
+    //private float[] vector;
+    private DataAPIVector vector;
     
     @JsonProperty("added_date")
     private Instant addedDate;
@@ -78,7 +80,7 @@ public class Video {
         return previewImageLocation;
     }
 
-    public float[] getVector() {
+    public DataAPIVector getVector() {
         return vector;
     }
 
@@ -143,7 +145,7 @@ public class Video {
         this.previewImageLocation = previewImageLocation;
     }
 
-    public void setVector(float[] videoVector) {
+    public void setVector(DataAPIVector videoVector) {
         this.vector = videoVector;
     }
 

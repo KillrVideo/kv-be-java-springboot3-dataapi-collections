@@ -1,13 +1,13 @@
 package com.killrvideo.dao;
 
-import com.datastax.astra.client.collections.Collection;
 import com.datastax.astra.client.databases.Database;
-import com.datastax.astra.client.core.query.Filter;
-import com.datastax.astra.client.core.query.Filters;
+import com.datastax.astra.client.collections.Collection;
 import com.datastax.astra.client.collections.commands.Update;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOneOptions;
 import com.datastax.astra.client.collections.commands.options.CollectionFindOptions;
 import com.datastax.astra.client.collections.definition.documents.Document;
+import com.datastax.astra.client.core.query.Filter;
+import com.datastax.astra.client.core.query.Filters;
 import com.datastax.astra.client.core.query.Projection;
 import com.datastax.astra.client.core.query.Sort;
 import com.datastax.astra.client.core.vector.DataAPIVector;
@@ -58,19 +58,7 @@ public class VideoDao {
         return video;
     }
 
-    /**
-     * Finds a video by its database ID.
-     *
-     * @param database ID of the video to find
-     * @return Optional containing the video if found, empty otherwise
-     */
-    public Optional<Video> findById(String id) {
-        logger.debug("Finding video by databaseID: {}", id);
-        Optional<Video> video = videoCollection.findById(id);
-        return video;
-    }
-
-        /**
+     /**
      * Finds a video by its video ID.
      *
      * @param videoId of the video to find
@@ -187,7 +175,7 @@ public class VideoDao {
      * @param limit Max number of similar videos to return.
      * @return FindIterable of similar videos.
      */
-    public List<Video> findByVector(float[] vector, int limit) {
+    public List<Video> findByVector(DataAPIVector vector, int limit) {
         if (vector == null) {
             logger.error("Attempted vector search with null vector");
             throw new IllegalArgumentException("Query vector cannot be null.");
@@ -197,7 +185,7 @@ public class VideoDao {
         return videoCollection.find(
             null,
             new CollectionFindOptions()
-                .sort(Sort.vector(vector))
+                .sort(Sort.vector("$vector", vector))
                 .limit(limit)
             )
             .toList();
