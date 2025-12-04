@@ -27,6 +27,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
+
+import com.datastax.astra.client.core.vector.DataAPIVector;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -130,7 +132,7 @@ public class VideoController {
             // Generate the embedding for the video
             String videoText = video.getName();
             float[] videoVector = embeddingModel.embed(videoText).content().vector();
-            video.setVector(videoVector);
+            video.setVector(new DataAPIVector(videoVector));
 
             // save video to database
             Video savedVideo = videoDao.save(video);
@@ -371,19 +373,26 @@ public class VideoController {
             
             for (Video video : similarVideos) {
             	VideoResponse vResp = VideoResponse.fromVideo(video);
-            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
             	
-                if (vRatings.size() > 0) {
-                    int ratingCount = vRatings.size();
-                    int totalRating = 0;
-                    for (Rating rating : vRatings) {
-                        totalRating += rating.getRatingAsInt();
-                    }
-
-                    vResp.setRating(totalRating / ratingCount);
-                } else {
-                	vResp.setRating(0.0f);
-                }
+            	// add video ratings
+            	try {
+	            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
+	            	
+	                if (vRatings.size() > 0) {
+	                    int ratingCount = vRatings.size();
+	                    int totalRating = 0;
+	                    for (Rating rating : vRatings) {
+	                        totalRating += rating.getRatingAsInt();
+	                    }
+	
+	                    vResp.setRating(totalRating / ratingCount);
+	                } else {
+	                	vResp.setRating(0.0f);
+	                }
+            	} catch (Exception ex) {
+            		System.out.println("Ratings could not be found: " + ex);
+            		vResp.setRating(0.0f);
+            	}
                 
                 returnVal.add(vResp);
             }

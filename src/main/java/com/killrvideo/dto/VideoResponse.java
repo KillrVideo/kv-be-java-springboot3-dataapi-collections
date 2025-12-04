@@ -1,5 +1,6 @@
 package com.killrvideo.dto;
 
+import com.datastax.astra.client.core.vector.DataAPIVector;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
@@ -48,7 +49,8 @@ public class VideoResponse {
     @JsonProperty("averageRating")
     private float rating;
 
-    private float[] vector;
+    //private float[] vector;
+    private DataAPIVector vector;
 
     //@JsonProperty("youtube_id")
     private String youtubeVideoId;
@@ -173,11 +175,11 @@ public class VideoResponse {
         this.processingStatus = processingStatus;
     }
 
-    public void setVector(float[] vector) {
+    public void setVector(DataAPIVector vector) {
         this.vector = vector;
     }
 
-    public float[] getVector() {
+    public DataAPIVector getVector() {
         return vector;
     }
 
