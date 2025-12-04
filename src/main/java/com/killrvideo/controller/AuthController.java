@@ -83,7 +83,7 @@ public class AuthController {
                 signUpRequest.getLastName(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()),
-                Instant.now().toString(),
+                Instant.now(),
                 "USER"
         );
 
