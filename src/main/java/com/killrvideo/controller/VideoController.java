@@ -374,29 +374,33 @@ public class VideoController {
             for (Video video : similarVideos) {
             	VideoResponse vResp = VideoResponse.fromVideo(video);
             	
-            	// add video ratings
-            	try {
-	            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
-	            	
-	                if (vRatings.size() > 0) {
-	                    int ratingCount = vRatings.size();
-	                    int totalRating = 0;
-	                    for (Rating rating : vRatings) {
-	                        totalRating += rating.getRatingAsInt();
-	                    }
-	
-	                    vResp.setRating(totalRating / ratingCount);
-	                } else {
-	                	vResp.setRating(0.0f);
-	                }
-            	} catch (Exception ex) {
-            		System.out.println("Ratings could not be found: " + ex);
-            		vResp.setRating(0.0f);
+        		// don't add the same video into the result set
+            	if (!sourceVideo.getVideoid().equals(video.getVideoid())) {
+            	
+	            	// add video ratings
+	            	try {
+		            	List<Rating> vRatings = ratingDao.findByVideoId(video.getVideoid());
+		            	
+		                if (vRatings.size() > 0) {
+		                    int ratingCount = vRatings.size();
+		                    int totalRating = 0;
+		                    for (Rating rating : vRatings) {
+		                        totalRating += rating.getRatingAsInt();
+		                    }
+		
+		                    vResp.setRating(totalRating / ratingCount);
+		                } else {
+		                	vResp.setRating(0.0f);
+		                }
+	            	} catch (Exception ex) {
+	            		System.out.println("Ratings could not be found: " + ex);
+	            		vResp.setRating(0.0f);
+	            	}
+	                
+	                returnVal.add(vResp);
             	}
-                
-                returnVal.add(vResp);
             }
-                        
+            
             return ResponseEntity.ok(returnVal);
         } else {
             return ResponseEntity.notFound().build();
