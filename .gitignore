@@ -10,6 +10,7 @@ frontend/
 .java-version
 *.mp4
 *.env
+vars
 
 ### STS ###
 .apt_generated
