@@ -408,9 +408,25 @@ public class VideoController {
     }
 
     /**
+     * Return the title of the supplied YouTube video.
+     */
+    @PostMapping("/preview")
+    public ResponseEntity<VideoPreviewResponse> previewYoutubeVideo(
+    		@RequestBody VideoSubmitRequest req) {
+    	
+    	String youtubeId = extractYouTubeId(req.getYoutubeUrl());
+    	YoutubeMetadata youtubeData = fetchYoutubeMetadata(youtubeId);
+    	
+    	VideoPreviewResponse response = new VideoPreviewResponse();
+    	response.setTitle(youtubeData.getTitle());
+    	
+    	return ResponseEntity.ok(response);
+    }
+    
+    /**
      * Submit a new comment
      */
-    @PostMapping("{videoId}/comments")
+    @PostMapping("/{videoId}/comments")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CommentResponse> submitComment(
             @PathVariable String videoId,

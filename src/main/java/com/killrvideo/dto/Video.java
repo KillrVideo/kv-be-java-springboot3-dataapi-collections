@@ -1,12 +1,15 @@
 package com.killrvideo.dto;
 
 import com.datastax.astra.client.core.vector.DataAPIVector;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
 //import java.time.Instant;
 import java.util.Set;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Video {
     //@JsonProperty("video_id")
     private String videoid;
@@ -18,6 +21,7 @@ public class Video {
     
     private String description;
     
+    @JsonIgnore
     private Set<String> tags;
     
     private String location;
