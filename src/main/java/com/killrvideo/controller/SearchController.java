@@ -1,6 +1,7 @@
 package com.killrvideo.controller;
 
 import com.killrvideo.dao.VideoDao;
+import com.killrvideo.dao.VideoSearchDao;
 import com.killrvideo.dto.VideoResponse;
 import com.killrvideo.dto.TagSuggestion;
 import com.killrvideo.dto.Video;
@@ -39,6 +40,9 @@ public class SearchController {
 
     @Autowired
     private VideoDao videoDao;
+    
+    @Autowired
+    private VideoSearchDao searchDao;
 
     /**
      * Get tag suggestions based on a query
@@ -81,7 +85,35 @@ public class SearchController {
      * Search videos by query string
      */
     @GetMapping("/videos")
-    public ResponseEntity<?> searchVideos(
+    public ResponseEntity<?> searchVideosByText(
+    		HttpServletRequest request) {
+    	
+        Integer limit = 20;
+        Map<String, String[]> params = request.getParameterMap();
+
+        String query = params.get("query")[0];
+        if (params.containsKey("limit")) {
+            limit = Integer.parseInt(params.get("limit")[0]);
+        }
+
+        if (query == null || query.trim().isEmpty()) {
+            logger.warn("Empty query string provided for video search");
+            return ResponseEntity.badRequest().body(List.of());
+        }
+        
+        // pull video search results from OpenSearch
+        Optional<List<Video>> searchResults = searchDao.searchVideos(query, limit);
+        
+        List<VideoResponse> videos = searchResults.get()
+                .stream()
+                .map(VideoResponse::fromVideo)
+                .collect(Collectors.toList());
+        
+        SearchVideosResponse response = new SearchVideosResponse(videos);
+        return ResponseEntity.ok(response);
+    }
+    
+    public ResponseEntity<?> searchVideosByVector(
             HttpServletRequest request) {
 
         Integer limit = 20;

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.List;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -118,18 +119,35 @@ public class UserDao {
             .append("email", user.getEmail())
             .append("hashed_password", user.getHashedPassword())
             .append("roles", user.getRoles())
-        	.append("created_date", user.getCreatedAt());
+        	.append("created_date", user.getCreatedAt().toString());
     }
 
     private User toUser(Document document) {
-        return new User(
-            document.getString("userid"),
-            document.getString("firstname"),
-            document.getString("lastname"),
-            document.getString("email"),
-            document.getString("hashed_password"),
-            document.getInstant("created_date"),
-            document.getString("roles")
-        );
+    	
+    	try {
+	        User user = new User(
+	            document.getString("userid"),
+	            document.getString("firstname"),
+	            document.getString("lastname"),
+	            document.getString("email"),
+	            document.getString("hashed_password"),
+	            Instant.parse(document.getString("created_date")),
+	            document.getString("roles")
+	        );
+	        
+	        return user;
+    	} catch (Exception ex) {
+	        User user = new User(
+	            document.getString("userid"),
+	            document.getString("firstname"),
+	            document.getString("lastname"),
+	            document.getString("email"),
+	            document.getString("hashed_password"),
+	            document.getInstant("created_date"),
+	            document.getString("roles")
+	        );
+
+		    return user;
+    	}
     }
 }

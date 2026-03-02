@@ -210,7 +210,13 @@ public class VideoResponse {
         response.setUploadDate(video.getAddedDate());
         response.setVector(video.getVector());
         response.setYoutubeVideoId(video.getYoutubeId());
-        response.setViews(video.getStats().getViews());
+        
+        // some videos don't have stats
+        try {
+        	response.setViews(video.getStats().getViews());
+        } catch (Exception ex) {
+        	System.out.println("Video " + video.getVideoid() + " does not have stats.");
+        }
         // Additional fields will be set by the service layer
         // username, viewCount, commentCount, processingStatus
         return response;

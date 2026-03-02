@@ -25,7 +25,7 @@ public class User {
     private Instant createdAt;
 
     private String roles;
-
+    
     public User(String userId, String firstName, String lastName, String email, String hashedPassword, Instant createdAt, String roles) {
         this.userId = userId;
         this.firstName = firstName;

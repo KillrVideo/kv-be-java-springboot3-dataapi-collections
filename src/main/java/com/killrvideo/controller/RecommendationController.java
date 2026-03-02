@@ -1,7 +1,10 @@
 package com.killrvideo.controller;
 
 import com.killrvideo.dto.RecommendationResponse;
+import com.killrvideo.dto.Video;
+import com.killrvideo.dto.VideoResponse;
 import com.killrvideo.service.RecommendationService;
+import com.killrvideo.dao.VideoDao;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -21,6 +25,9 @@ import java.util.List;
 public class RecommendationController {
     private static final Logger logger = LoggerFactory.getLogger(RecommendationController.class);
 
+    @Autowired
+    private VideoDao videoDao;
+    
     @Autowired
     private RecommendationService recommendationService;
 
@@ -62,5 +69,41 @@ public class RecommendationController {
             logger.error("Unexpected error in recommendation endpoint: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
+    }
+    
+    @GetMapping("/foryou")
+    public ResponseEntity<List<RecommendationResponse>> getForYouVideos() {
+    	
+    	List<RecommendationResponse> returnVal = new ArrayList<>();
+
+    	// use findLatest() for now
+    	List<Video> recommendedVideoList = videoDao.findLatest(5);
+    	
+    	for (Video recVideo : recommendedVideoList) {
+    		RecommendationResponse recResponse = new RecommendationResponse();
+    		VideoResponse videoResp = new VideoResponse();
+    		
+    		videoResp.setAddedDate(recVideo.getAddedDate());
+    		videoResp.setDescription(recVideo.getDescription());
+    		videoResp.setKey(recVideo.getVideoid());
+    		videoResp.setLocation(recVideo.getLocation());
+    		videoResp.setName(recVideo.getName());
+    		videoResp.setPreviewImageLocation(recVideo.getPreviewImageLocation());
+    		videoResp.setProcessingStatus(recVideo.getProcessingStatus());
+    		videoResp.setTags(recVideo.getTags());
+    		videoResp.setUserId(recVideo.getUserid());
+    		videoResp.setVector(recVideo.getVector());
+    		videoResp.setVideoId(recVideo.getVideoid());
+    		videoResp.setYoutubeVideoId(recVideo.getYoutubeId());
+    		
+    		// add video response to recommended response
+    		recResponse.setVideo(videoResp);
+    		recResponse.setSimilarityScore(0.0d);
+    		
+    		// add recommended response to returnval
+    		returnVal.add(recResponse);
+    	}
+    	
+    	return ResponseEntity.ok(returnVal);
     }
 } 
