@@ -98,18 +98,18 @@ public class VideoSearchDao {
                     .query(FieldValue.of(text))
                 )
             );
-		
+
 		try {
 			SearchResponse<Video> resp = client.search(s -> s
 				.index(indexName)
 				.size(limit)
 				.query(searchQuery)
 				, Video.class);
-			
+
 			for (Hit<Video> hit : resp.hits().hits()) {
 				returnVal.add(hit.source());
 			}
-			
+
 		} catch (Exception ex) {
 			// TODO Auto-generated catch block
 			ex.printStackTrace();

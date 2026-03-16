@@ -16,6 +16,9 @@ public class Comment {
     private String comment;
     
     private Instant timestamp;
+    
+    @JsonProperty("sentiment_score")
+    private float sentimentScore;
 
     // Additional metadata fields
     @JsonProperty("user_name")
@@ -46,6 +49,10 @@ public class Comment {
         return userName;
     }
 
+    public float getSentimentScore() {
+    	return sentimentScore;
+    }
+    
     // Setters
     public void setCommentId(String commentId) {
         this.commentId = commentId;
@@ -69,5 +76,9 @@ public class Comment {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+    
+    public void setSentimentScore(float score) {
+    	this.sentimentScore = score;
     }
 } 

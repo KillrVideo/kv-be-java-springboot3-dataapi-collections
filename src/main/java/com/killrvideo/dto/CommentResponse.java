@@ -110,6 +110,7 @@ public class CommentResponse {
         response.setUserId(comment.getUserId());
         response.setComment(comment.getComment());
         response.setTimestamp(comment.getTimestamp());
+        response.setSentimentScore(comment.getSentimentScore());
 
         if (comment.getUserName() == null) {
             String userId = comment.getUserId();
