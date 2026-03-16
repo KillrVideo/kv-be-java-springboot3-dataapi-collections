@@ -32,31 +32,44 @@ This repo demonstrates modern API best-practices with:
 4. Docker or Podman (optional) if you want to run the individual services in containers.
 
 ## Setup & Configuration
+
 ```bash
-# clone
+### clone
 git clone git@github.com:KillrVideo/killrvideo-java-2025.git
 cd killrvideo-java-2025
 
-# build and install deps
+### build and install deps
 mvn clean package
 ```
 
-Database collections:
+### Database collections:
 1. Create a new keyspace named `killrvideo_dataapi`.
 2. Create the following non-vector-enabled collections:
- - comments
- - users
- - ratings
+ - `comments`
+ - `content_moderation`
+ - `users`
+ - `ratings`
+ - `video_ratings`
 3. Create the following vector-enabled collection:
- - videos (with a 384-dimensional vector)
+ - `videos` (with a 384-dimensional vector)
 
-Environment variables (via `export`):
+### Load data:
+1. AstraDB - [KillrVideo collections loader](https://github.com/KillrVideo/killrvideo-data/blob/master/loaders/astra-collections/README.md)
+2. OpenSearch - [CSV-to-OpenSearch project](https://github.com/KillrVideo/killrvideo-csv-to-opensearch/tree/main)
+
+### Environment variables (via `export`):
 
 | Variable | Description |
 |----------|-------------|
 | `ASTRA_DB_API_ENDPOINT` | REST endpoint for your Astra DB instance |
 | `ASTRA_DB_APPLICATION_TOKEN` | Token created in Astra UI |
 | `ASTRA_DB_NAMESPACE` | `killrvideo_dataapi` |
+| `YOUTUBE_API_KEY` | A YouTube API key, used for grabbing new video metadata. |
+| `HF_API_KEY | A HuggingFace API key, used for generating embeddings without getting rate-limited...probably. |
+| `OPENSEARCH_HOST` | IP or hostname for your OpenSearch instance. Assumes https. |
+| `OPENSEARCH_PORT` | Port for your OpenSearch instance. Defaults to 9200 if null. |
+| `OPENSEARCH_USERNAME` | Username for your OpenSearch instance. | 
+| `OPENSEARCH_PASSWORD` | Password for your OpenSearch instance. | 
 
 Edit `application.yml`:
  - Generate and change the `killrvideo.jwt.secret` key (or use the default).

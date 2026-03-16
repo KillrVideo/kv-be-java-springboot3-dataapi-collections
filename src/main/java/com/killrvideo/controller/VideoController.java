@@ -261,7 +261,23 @@ public class VideoController {
 
         for (Video video : videos) {
             uniqueVideoIDs.add(video.getVideoid());
+            // Get all ratings for the video
+            List<Rating> ratings = ratingDao.findByVideoId(video.getVideoid());
+            
             VideoResponse videoResponse = VideoResponse.fromVideo(video);
+
+            if (ratings.size() > 0) {
+                int ratingCount = ratings.size();
+                int totalRating = 0;
+                for (Rating rating : ratings) {
+                    totalRating += rating.getRatingAsInt();
+                }
+
+                videoResponse.setRating(totalRating / ratingCount);
+            } else {
+                videoResponse.setRating(0.0f);
+            }
+            
             videoResponses.add(videoResponse);
         }
 
