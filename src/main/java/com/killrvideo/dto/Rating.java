@@ -6,10 +6,10 @@ public class Rating {
     @JsonProperty("_id")
     private String ratingId;
     
-    @JsonProperty("video_id")
+    @JsonProperty("videoid")
     private String videoId;
     
-    @JsonProperty("user_id")
+    @JsonProperty("userid")
     private String userId;
     
     private String rating; // 1-5 rating

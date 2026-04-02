@@ -4,7 +4,6 @@ import com.datastax.astra.client.core.vector.DataAPIVector;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
-//import java.time.Instant;
 import java.util.Set;
 
 public class VideoResponse {

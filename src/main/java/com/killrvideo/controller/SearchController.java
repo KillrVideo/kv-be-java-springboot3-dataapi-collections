@@ -1,11 +1,13 @@
 package com.killrvideo.controller;
 
-import com.killrvideo.dao.VideoDao;
-import com.killrvideo.dao.VideoSearchDao;
-import com.killrvideo.dto.VideoResponse;
+import com.killrvideo.dto.Rating;
+import com.killrvideo.dao.RatingDao;
+import com.killrvideo.dto.SearchVideosResponse;
 import com.killrvideo.dto.TagSuggestion;
 import com.killrvideo.dto.Video;
-import com.killrvideo.dto.SearchVideosResponse;
+import com.killrvideo.dao.VideoDao;
+import com.killrvideo.dto.VideoResponse;
+import com.killrvideo.dao.VideoSearchDao;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -40,6 +42,9 @@ public class SearchController {
 
     @Autowired
     private VideoDao videoDao;
+
+    @Autowired
+    private RatingDao ratingDao;
     
     @Autowired
     private VideoSearchDao searchDao;
@@ -108,6 +113,30 @@ public class SearchController {
                 .stream()
                 .map(VideoResponse::fromVideo)
                 .collect(Collectors.toList());
+        
+        // add views and ratings to videos
+        for (VideoResponse video : videos) {
+        	Optional<Video> videoDB = videoDao.findByVideoId(video.getVideoId(), false);
+        	
+        	if (videoDB.isPresent()) {
+        		if (videoDB.get().getStats() != null) {
+        			video.setViews(videoDB.get().getStats().getViews());
+        		}
+        	}
+        	
+        	List<Rating> ratingsDB = ratingDao.findByVideoId(video.getVideoId());
+        	int ratingTotal = 0;
+        	int ratingCount = 0;
+        	
+        	for (Rating rating : ratingsDB) {
+        		ratingCount++;
+        		ratingTotal = ratingTotal + rating.getRatingAsInt();
+        	}
+        	
+        	if (ratingCount > 0) {
+        		video.setRating(ratingTotal / ratingCount);
+        	}
+        }
         
         SearchVideosResponse response = new SearchVideosResponse(videos);
         return ResponseEntity.ok(response);

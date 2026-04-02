@@ -14,6 +14,7 @@ import com.datastax.astra.client.core.vector.DataAPIVector;
 //import com.datastax.astra.client.collections.commands.Update;
 
 import com.killrvideo.dto.Video;
+import com.killrvideo.dto.VideoPlaybackStats;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,12 +132,13 @@ public class VideoDao {
         videoCollection.replaceOne(Filters.eq("videoid", videoid), video);
     }
 
-    public void updateViews(String videoId, long views, Instant lastViewed) {
+    //public void updateViews(String videoId, long views, Instant lastViewed) {
+    public void updateViews(String videoId, VideoPlaybackStats stats, Instant lastViewed) {
         logger.debug("Updating views for video with ID: {}", videoId);
         videoCollection.updateOne(Filters.eq("videoid", videoId),
             new Update()
-                .set("views", views)
-                .set("last_viewed", lastViewed));
+                //.set("stats", stats));
+            	.set("stats.views", stats.getViews()));
     }
 
     /**
