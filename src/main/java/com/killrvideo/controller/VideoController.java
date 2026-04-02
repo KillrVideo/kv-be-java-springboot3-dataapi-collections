@@ -193,15 +193,22 @@ public class VideoController {
     //POST /api/v1/videos/id/900c1236-55ae-4f05-a7fb-d566d603a2ae/view
     @PostMapping("/id/{videoId}/view")
     public ResponseEntity<?> recordVideoView(@PathVariable String videoId) {
-        Optional<Video> videoOpt = videoDao.findByVideoId(videoId, true);
+        Optional<Video> videoOpt = videoDao.findByVideoId(videoId, false);
 
         if (videoOpt.isPresent()) {
             Instant now = Instant.now();
             Video video = videoOpt.get();
+            
+            // if the video does not have stats, then create a new object for it
+            if (video.getStats() == null) {
+            	VideoPlaybackStats stats = new VideoPlaybackStats();
+            	video.setStats(stats);
+            }
+            
             int views = video.getStats().getViews() + 1;
             video.getStats().setViews(views);
             //video.setLastViewed(now.toString());
-            videoDao.updateViews(videoId,views,now);
+            videoDao.updateViews(videoId,video.getStats(),now);
             //videoDao.update(video);
             return ResponseEntity.ok(VideoResponse.fromVideo(video));
         }

@@ -53,8 +53,8 @@ public class RatingDao {
         logger.debug("Finding rating for video: {} and user: {}", videoId, userId);
         return ratingCollection.findOne(
             Filters.and(
-                Filters.eq("video_id", videoId),
-                Filters.eq("user_id", userId)
+                Filters.eq("videoid", videoId),
+                Filters.eq("userid", userId)
             )
         );
     }
@@ -80,7 +80,7 @@ public class RatingDao {
     public void update(Rating rating) {
         logger.debug("Updating rating with ID: {}", rating.getRatingId());
         try {
-            ratingCollection.replaceOne(Filters.eq("rating_id", rating.getRatingId()), rating);
+            ratingCollection.replaceOne(Filters.eq("_id", rating.getRatingId()), rating);
         } catch (Exception e) {
             logger.error("Error updating rating: {} {}", rating, e.getMessage());
             throw new IllegalArgumentException("Error updating rating: " + e.getMessage());
@@ -94,6 +94,6 @@ public class RatingDao {
      */
     public void deleteById(String ratingId) {
         logger.debug("Deleting rating with ID: {}", ratingId);
-        ratingCollection.deleteOne(Filters.eq("rating_id", ratingId));
+        ratingCollection.deleteOne(Filters.eq("_id", ratingId));
     }
 } 
